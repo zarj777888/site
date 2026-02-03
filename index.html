@@ -1,480 +1,585 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Dataset Generator</title>
-    <style>
-        :root {
-            --bg-color: #080808; /* Глубокий черный */
-            --panel-bg: #141414; /* Темно-серый для панелей */
-            --input-bg: #222222;
-            --accent-color: #ccff00; /* Тот самый неоново-желтый */
-            --text-main: #ffffff;
-            --text-dim: #666666;
-            --border: #333333;
-        }
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>NanoBanana Pro Prompt+Batch Studio</title>
+  <style>
+    :root{
+      --bg:#080808; --panel:#141414; --input:#222; --border:#333;
+      --accent:#ccff00; --text:#fff; --dim:#777; --bad:#ff4d4d;
+    }
+    body{background:var(--bg); color:var(--text); font-family:Inter,system-ui,-apple-system,sans-serif;
+      margin:0; padding:18px; display:flex; flex-direction:column; align-items:center; gap:14px;}
+    .wrap{width:100%; max-width:1100px;}
+    .panel{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:14px; box-shadow:0 18px 50px rgba(0,0,0,.55);}
+    .upload{height:220px; border:2px dashed var(--border); border-radius:16px; cursor:pointer; position:relative;
+      display:flex; align-items:center; justify-content:center; overflow:hidden; background:rgba(255,255,255,.02); transition:.2s;}
+    .upload:hover{border-color:var(--accent); background:rgba(204,255,0,.05);}
+    .upload p{color:var(--dim); margin:0; font-size:14px;}
+    #fileInput{display:none;}
+    #preview{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:#000; display:none;}
+    .row{display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;}
+    .group{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+    .label{font-size:12px; font-weight:900; color:var(--dim); text-transform:uppercase; letter-spacing:1px;}
+    .btns{display:flex; background:#000; border:1px solid var(--border); border-radius:10px; padding:4px;}
+    .tbtn{background:transparent; border:0; color:var(--dim); padding:8px 14px; font-weight:800; border-radius:8px; cursor:pointer; font-size:13px;}
+    .tbtn:hover{color:#fff;}
+    .tbtn.active{background:var(--accent); color:#000;}
+    .field{display:flex; align-items:center; gap:10px; background:#000; border:1px solid var(--border); border-radius:12px; padding:10px 12px;}
+    .field input,.field select{background:transparent; border:0; outline:0; color:#fff; font-size:13px;}
+    .field small{color:var(--dim); font-size:12px;}
+    .slider{display:flex; align-items:center; gap:10px; background:#000; border:1px solid var(--border); border-radius:12px; padding:8px 12px;}
+    input[type=range]{-webkit-appearance:none; width:150px; height:4px; background:#333; border-radius:2px; outline:none;}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent); cursor:pointer; box-shadow:0 0 10px rgba(204,255,0,.5);}
+    .mono{font-family:ui-monospace,Consolas,monospace; font-weight:900; color:var(--accent); width:36px; text-align:right;}
+    .inputs{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;}
+    .in{flex:1; min-width:280px; display:flex; align-items:center; gap:10px; background:var(--input); border:1px solid transparent; border-radius:12px; padding:0 12px;}
+    .in:focus-within{border-color:#444;}
+    .in input{width:100%; background:transparent; border:0; outline:0; color:#fff; padding:14px 0; font-size:14px;}
+    .actions{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;}
+    .abtn{height:46px; padding:0 18px; border-radius:12px; border:0; cursor:pointer; font-weight:900; font-size:14px; background:#333; color:#aaa;}
+    .abtn:hover{background:var(--accent); color:#000;}
+    .abtn.alt{background:#000; border:1px solid var(--border); color:#ddd;}
+    .abtn.alt:hover{border-color:var(--accent); color:#fff;}
+    .abtn.danger{background:transparent; border:1px solid var(--bad); color:var(--bad); display:none;}
+    .abtn.danger:hover{background:rgba(255,77,77,.1);}
+    .out{display:none;}
+    .topbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:10px;}
+    .progress{flex:1; min-width:260px; height:10px; border-radius:999px; border:1px solid var(--border); background:#101010; overflow:hidden;}
+    .progress > div{height:100%; width:0%; background:var(--accent);}
+    .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+    @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:560px){.grid{grid-template-columns:1fr;}}
+    .card{background:#111; border:1px solid #222; border-radius:14px; overflow:hidden; display:flex; flex-direction:column;}
+    .thumb{height:220px; background:#000; display:flex; align-items:center; justify-content:center; color:#777; font-size:12px;}
+    .thumb img{width:100%; height:100%; object-fit:cover;}
+    .meta{padding:12px;}
+    .meta .tag{color:#777; font-size:11px; text-transform:uppercase; letter-spacing:1px;}
+    .meta pre{margin:8px 0 0 0; white-space:pre-wrap; word-break:break-word; color:#ccc; font-size:12px; line-height:1.35;
+      font-family:ui-monospace,Consolas,monospace; max-height:160px; overflow:auto;}
+    .mini{display:flex; gap:10px; padding:12px; padding-top:0;}
+    .mbtn{flex:1; height:36px; border-radius:10px; border:1px solid var(--border); background:#000; color:#ddd; cursor:pointer; font-weight:900; font-size:12px;}
+    .mbtn:hover{border-color:var(--accent); color:#fff;}
+    .modal{position:fixed; inset:0; background:rgba(0,0,0,.68); display:none; align-items:center; justify-content:center; padding:18px;}
+    .box{width:100%; max-width:620px; background:#0f0f0f; border:1px solid #222; border-radius:18px; padding:16px; box-shadow:0 25px 80px rgba(0,0,0,.6);}
+    .box h3{margin:0 0 8px 0; font-size:16px;}
+    .box p{margin:0 0 12px 0; color:#888; font-size:13px; line-height:1.35;}
+    .box .row2{display:flex; gap:10px; flex-wrap:wrap;}
+    .box input{flex:1; min-width:260px; background:#000; border:1px solid #333; border-radius:12px; padding:12px 14px; color:#fff; outline:none;
+      font-family:ui-monospace,Consolas,monospace;}
+    .save{height:44px; padding:0 16px; border-radius:12px; border:0; background:var(--accent); color:#000; font-weight:950; cursor:pointer;}
+    .hint{color:#777; font-size:12px; margin-top:10px;}
+  </style>
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-
-        /* --- Зона загрузки изображения --- */
-        .upload-zone {
-            width: 100%;
-            max-width: 900px;
-            height: 250px;
-            border: 2px dashed var(--border);
-            border-radius: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 30px;
-            cursor: pointer;
-            transition: 0.3s;
-            background-color: rgba(255,255,255,0.02);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .upload-zone:hover {
-            border-color: var(--accent-color);
-            background-color: rgba(204, 255, 0, 0.05);
-        }
-
-        .upload-zone p {
-            color: var(--text-dim);
-            margin-top: 15px;
-            font-size: 14px;
-        }
-
-        .upload-icon {
-            font-size: 40px;
-            color: var(--text-dim);
-        }
-
-        /* Превью загруженного фото */
-        #imagePreview {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background-color: #000;
-            display: none; /* Скрыто по умолчанию */
-        }
-        
-        #fileInput {
-            display: none;
-        }
-
-        /* --- Нижняя панель управления (как на скрине) --- */
-        .control-bar {
-            background-color: var(--panel-bg);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 15px 25px;
-            width: 100%;
-            max-width: 900px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-
-        /* Верхний ряд контролов (Ratio, Size, Count) */
-        .controls-top {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            gap: 20px;
-        }
-
-        .group-label {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-right: 15px;
-        }
-
-        .btn-group {
-            display: flex;
-            background-color: #000;
-            border-radius: 8px;
-            padding: 4px;
-            border: 1px solid var(--border);
-        }
-
-        .toggle-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-dim);
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .toggle-btn:hover {
-            color: #fff;
-        }
-
-        /* Активное состояние кнопки (Желтая) */
-        .toggle-btn.active {
-            background-color: var(--accent-color);
-            color: #000;
-            font-weight: 800;
-        }
-
-        /* Слайдер количества */
-        .slider-group {
-            display: flex;
-            align-items: center;
-            background-color: #000;
-            padding: 5px 15px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100px;
-            height: 4px;
-            background: #333;
-            border-radius: 2px;
-            outline: none;
-            margin: 0 10px;
-        }
-
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--accent-color);
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(204,255,0,0.5);
-        }
-
-        #countVal {
-            color: var(--accent-color);
-            font-weight: bold;
-            font-family: monospace;
-            width: 20px;
-            text-align: center;
-        }
-
-        /* Нижний ряд (Поле ввода и Кнопка) */
-        .controls-bottom {
-            display: flex;
-            gap: 15px;
-        }
-
-        .text-input-wrapper {
-            flex-grow: 1;
-            background-color: var(--input-bg);
-            border-radius: 12px;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            border: 1px solid transparent;
-            transition: 0.3s;
-        }
-        
-        .text-input-wrapper:focus-within {
-            border-color: #444;
-        }
-
-        .icon {
-            color: #555;
-            font-size: 20px;
-            margin-right: 15px;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            background: transparent;
-            border: none;
-            color: #fff;
-            padding: 18px 0;
-            font-size: 15px;
-            outline: none;
-        }
-
-        .generate-btn {
-            background-color: #333;
-            color: #888;
-            border: none;
-            padding: 0 35px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .generate-btn:hover {
-            background-color: var(--accent-color);
-            color: #000;
-            box-shadow: 0 0 20px rgba(204,255,0,0.2);
-        }
-
-        /* Блок вывода */
-        .output-area {
-            width: 100%;
-            max-width: 900px;
-            margin-top: 30px;
-            display: none; /* Скрыт пока нет генерации */
-        }
-
-        .output-header {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 10px;
-        }
-
-        .copy-btn {
-            background: transparent;
-            color: var(--accent-color);
-            border: 1px solid var(--accent-color);
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .prompt-card {
-            background-color: #111;
-            border-left: 3px solid #333;
-            padding: 20px;
-            margin-bottom: 15px;
-            font-family: 'Consolas', monospace;
-            font-size: 13px;
-            line-height: 1.5;
-            color: #ccc;
-        }
-        
-        .prompt-card:hover {
-            border-left-color: var(--accent-color);
-            background-color: #161616;
-        }
-
-        .tag-info {
-            color: #555;
-            font-size: 11px;
-            margin-bottom: 8px;
-            display: block;
-            text-transform: uppercase;
-        }
-
-    </style>
+  <!-- JSZip (клиентский ZIP) -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
 <body>
+  <div class="wrap upload panel" id="dropZone">
+    <p id="uploadText">Нажми или перетащи сюда фото (Reference optional)</p>
+    <img id="preview" alt="preview"/>
+    <input type="file" id="fileInput" accept="image/*"/>
+  </div>
 
-    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-        <span class="upload-icon">📷</span>
-        <p>Нажми или перетащи сюда фото (Референс)</p>
-        <img id="imagePreview" alt="Preview">
-        <input type="file" id="fileInput" accept="image/*">
+  <div class="wrap panel">
+    <div class="row">
+      <div class="group">
+        <span class="label">Model</span>
+        <div class="btns" id="modelGroup">
+          <button class="tbtn active" data-model="gemini-3-pro-image-preview">Pro</button>
+          <button class="tbtn" data-model="gemini-2.5-flash-image">Flash</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <span class="label">Ratio</span>
+        <div class="btns" id="ratioGroup">
+          <button class="tbtn" data-ratio="1:1">1:1</button>
+          <button class="tbtn" data-ratio="3:4">3:4</button>
+          <button class="tbtn" data-ratio="4:3">4:3</button>
+          <button class="tbtn active" data-ratio="16:9">16:9</button>
+          <button class="tbtn" data-ratio="9:16">9:16</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <span class="label">Quality</span>
+        <div class="btns" id="sizeGroup">
+          <button class="tbtn active" data-size="1K">1K</button>
+          <button class="tbtn" data-size="2K">2K</button>
+          <button class="tbtn" data-size="4K">4K</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <span class="label">Count</span>
+        <div class="slider">
+          <span class="mono" id="countVal">50</span>
+          <input type="range" id="countRange" min="1" max="200" value="50"/>
+        </div>
+      </div>
+
+      <div class="group">
+        <span class="label">Concurrency</span>
+        <div class="slider">
+          <span class="mono" id="concVal">4</span>
+          <input type="range" id="concRange" min="1" max="12" value="4"/>
+        </div>
+      </div>
+
+      <div class="group">
+        <span class="label">Style pack</span>
+        <div class="field">
+          <select id="stylePack">
+            <option value="editorial">Editorial / Fashion</option>
+            <option value="cinema">Cinematic</option>
+            <option value="product">Product</option>
+            <option value="archviz">Archviz</option>
+            <option value="anime">Anime</option>
+            <option value="infographic">Infographic / Text</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="group">
+        <span class="label">Key</span>
+        <button class="abtn alt" id="keyBtn">Set API key</button>
+      </div>
     </div>
 
-    <div class="control-bar">
-        
-        <div class="controls-top">
-            
-            <div style="display: flex; align-items: center;">
-                <span class="group-label">RATIO</span>
-                <div class="btn-group" id="ratioGroup">
-                    <button class="toggle-btn" onclick="selectOption(this, 'ratio', '--ar 1:1')">1:1</button>
-                    <button class="toggle-btn" onclick="selectOption(this, 'ratio', '--ar 3:4')">3:4</button>
-                    <button class="toggle-btn" onclick="selectOption(this, 'ratio', '--ar 4:3')">4:3</button>
-                    <button class="toggle-btn active" onclick="selectOption(this, 'ratio', '--ar 16:9')">16:9</button>
-                    <button class="toggle-btn" onclick="selectOption(this, 'ratio', '--ar 9:16')">9:16</button>
-                </div>
-            </div>
-
-            <div style="display: flex; align-items: center;">
-                <span class="group-label">COMPLEXITY</span>
-                <div class="btn-group" id="complexityGroup">
-                    <button class="toggle-btn" onclick="selectOption(this, 'complexity', 'mid')">Mid</button>
-                    <button class="toggle-btn active" onclick="selectOption(this, 'complexity', 'max')">Max</button>
-                </div>
-            </div>
-
-            <div style="display: flex; align-items: center;">
-                <span class="group-label">COUNT</span>
-                <div class="slider-group">
-                    <span id="countVal">10</span>
-                    <input type="range" id="countRange" min="1" max="20" value="10" oninput="document.getElementById('countVal').innerText = this.value">
-                </div>
-            </div>
-
-        </div>
-
-        <div class="controls-bottom">
-            <div class="text-input-wrapper">
-                <span class="icon">✨</span>
-                <input type="text" id="extraContext" placeholder="Дополнительные детали (необязательно)...">
-            </div>
-            <button class="generate-btn" onclick="generateBatch()">Generate</button>
-        </div>
+    <div class="inputs">
+      <div class="in"><input id="basePrompt" placeholder="Base prompt (например: 'brutal cyberpunk street portrait, wet asphalt')"/></div>
+      <div class="in"><input id="avoid" placeholder="Avoid (через запятую): watermark, blurry, extra fingers, bad text..."/></div>
+      <div class="in"><input id="template" placeholder="(optional) Template: {subject}, {action}, {place} ..."/></div>
     </div>
 
-    <div class="output-area" id="outputArea">
-        <div class="output-header">
-            <button class="copy-btn" onclick="copyAll()">Copy All</button>
-        </div>
-        <div id="promptsList"></div>
+    <div class="actions">
+      <button class="abtn" id="genPromptsBtn">Generate prompts</button>
+      <button class="abtn" id="genImagesBtn">Generate images</button>
+      <button class="abtn alt" id="zipBtn" disabled>Download ZIP</button>
+      <button class="abtn alt" id="copyPromptsBtn" disabled>Copy prompts</button>
+      <button class="abtn danger" id="stopBtn">STOP</button>
     </div>
+  </div>
 
-    <script>
-        // --- Логика Интерфейса ---
-        
-        let currentSettings = {
-            ratio: '--ar 16:9',
-            complexity: 'max',
-            hasImage: false
-        };
+  <div class="wrap panel out" id="output">
+    <div class="topbar">
+      <div class="progress"><div id="bar"></div></div>
+      <div class="field"><small id="stat">Idle</small></div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
 
-        // Обработка загрузки фото (Превью)
-        const fileInput = document.getElementById('fileInput');
-        const preview = document.getElementById('imagePreview');
-        const dropZone = document.getElementById('dropZone');
+  <div class="modal" id="modal">
+    <div class="box">
+      <h3>Gemini API key</h3>
+      <p>Ключ хранится только в текущей вкладке (sessionStorage). Для запросов используется заголовок <code>x-goog-api-key</code>.</p>
+      <div class="row2">
+        <input id="apiKeyInput" placeholder="AIza..."/>
+        <button class="save" id="saveKey">Save</button>
+      </div>
+      <div class="hint">Если ты используешь не официальный Gemini key, а сторонний Bearer-ключ от прокси (dk-/sk-), скажи — адаптирую под твой эндпоинт.</div>
+    </div>
+  </div>
 
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                    dropZone.querySelector('p').style.display = 'none';
-                    dropZone.querySelector('.upload-icon').style.display = 'none';
-                    currentSettings.hasImage = true;
-                }
-                reader.readAsDataURL(file);
-            }
-        });
+<script>
+  // ---------- State ----------
+  const state = {
+    model: "gemini-3-pro-image-preview",
+    aspectRatio: "16:9",
+    imageSize: "1K",
+    reference: null, // {mimeType, base64}
+    abort: null,
+    prompts: [],
+    images: [], // {name, mime, base64, prompt}
+  };
 
-        // Функция переключения кнопок
-        function selectOption(element, group, value) {
-            // Убираем active у всех кнопок в этой группе
-            const buttons = element.parentElement.querySelectorAll('.toggle-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            
-            // Добавляем active нажатой
-            element.classList.add('active');
-            
-            // Сохраняем значение
-            currentSettings[group] = value;
+  const $ = (id) => document.getElementById(id);
+  const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  function uuid(){
+    return (crypto?.randomUUID ? crypto.randomUUID() :
+      (Date.now() + "-" + Math.random().toString(16).slice(2)));
+  }
+
+  // ---------- UI wiring ----------
+  function wireToggle(groupId, attr, setter){
+    const root = $(groupId);
+    root.querySelectorAll("button.tbtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        root.querySelectorAll("button.tbtn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        setter(btn.getAttribute(attr));
+      });
+    });
+  }
+  wireToggle("modelGroup","data-model",(v)=>state.model=v);
+  wireToggle("ratioGroup","data-ratio",(v)=>state.aspectRatio=v);
+  wireToggle("sizeGroup","data-size",(v)=>state.imageSize=v);
+
+  $("countRange").addEventListener("input", e => $("countVal").textContent = e.target.value);
+  $("concRange").addEventListener("input", e => $("concVal").textContent = e.target.value);
+
+  function setProgress(done,total){
+    const pct = total ? Math.round(done/total*100) : 0;
+    $("bar").style.width = pct + "%";
+    $("stat").textContent = `${done}/${total} (${pct}%)`;
+  }
+
+  // ---------- API key modal ----------
+  function getKey(){ return sessionStorage.getItem("GEMINI_API_KEY") || ""; }
+  function requireKey(){
+    if (!getKey()) $("modal").style.display = "flex";
+  }
+  $("keyBtn").onclick = () => { $("modal").style.display = "flex"; };
+  $("saveKey").onclick = () => {
+    const k = $("apiKeyInput").value.trim();
+    if (!k) return;
+    sessionStorage.setItem("GEMINI_API_KEY", k);
+    $("apiKeyInput").value = "";
+    $("modal").style.display = "none";
+  };
+
+  // ---------- Upload reference image ----------
+  const dropZone = $("dropZone");
+  const fileInput = $("fileInput");
+  const preview = $("preview");
+
+  dropZone.addEventListener("click", () => fileInput.click());
+  dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.style.borderColor = "var(--accent)"; });
+  dropZone.addEventListener("dragleave", () => { dropZone.style.borderColor = "var(--border)"; });
+  dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = "var(--border)";
+    const f = e.dataTransfer.files?.[0];
+    if (f) loadFile(f);
+  });
+  fileInput.addEventListener("change", (e) => {
+    const f = e.target.files?.[0];
+    if (f) loadFile(f);
+  });
+
+  function loadFile(file){
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = String(e.target.result);
+      preview.src = dataUrl;
+      preview.style.display = "block";
+      $("uploadText").style.display = "none";
+      const [meta, b64] = dataUrl.split(",");
+      const mime = meta.match(/data:(.*);base64/)?.[1] || "image/png";
+      state.reference = { mimeType: mime, base64: b64 };
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ---------- Prompt engine ----------
+  const db = {
+    subject: ["female model","male model","androgynous model","street photographer","chef","architect","cyberpunk courier","business executive","boxer","dancer"],
+    action: ["standing confidently","walking dynamically","sitting elegantly","looking over shoulder","laughing candidly","serious editorial pose","adjusting jacket","checking phone","holding a coffee","mid-motion"],
+    wardrobe: ["oversized blazer","silk slip dress","leather biker jacket","cashmere turtleneck","white linen shirt","tailored suit","techwear jacket","evening gown"],
+    palette: ["monochrome black","navy & gold","emerald & beige","red accent on neutral","pastel minimal","neon magenta & cyan","warm earth tones"],
+    place: ["night city street","minimalist studio","rooftop bar","underground parking","old library","art gallery","foggy forest","desert dunes","rainy alley","luxury penthouse"],
+    lens: ["35mm","50mm","85mm","24mm wide angle"],
+    camera: ["Sony A7R IV","Leica M11","ARRI Alexa","iPhone 15 Pro"],
+    lighting: ["golden hour","blue hour","neon rim light","soft window light","hard flash","studio softbox","cinematic shadows","overcast diffused light"],
+    mood: ["clean editorial","gritty documentary","high fashion","noir","dreamy","hyperreal","minimal luxury","futuristic"],
+    composition: ["rule of thirds","centered symmetry","close-up portrait","full body shot","low angle","high angle","subtle dutch tilt","leading lines"],
+    texture: ["natural skin texture","film grain","crisp micro-contrast","soft haze","sharp fabric weave","gentle bloom highlights"]
+  };
+
+  const stylePack = {
+    editorial: (x)=>`Editorial fashion photo. ${x}. Ultra realistic, clean styling.`,
+    cinema: (x)=>`Cinematic still frame, dramatic storytelling. ${x}. Color graded, moody.`,
+    product: (x)=>`Premium product photography look. ${x}. Perfect lighting, minimal background.`,
+    archviz: (x)=>`Photoreal architectural visualization vibe. ${x}. Accurate perspective.`,
+    anime: (x)=>`Anime key visual. ${x}. Clean linework, detailed shading.`,
+    infographic: (x)=>`Infographic design with legible typography. ${x}. High clarity, clean layout.`
+  };
+
+  function applyTemplate(tpl, vars){
+    return tpl
+      .replaceAll("{subject}", vars.subject)
+      .replaceAll("{action}", vars.action)
+      .replaceAll("{wardrobe}", vars.wardrobe)
+      .replaceAll("{palette}", vars.palette)
+      .replaceAll("{place}", vars.place)
+      .replaceAll("{lens}", vars.lens)
+      .replaceAll("{camera}", vars.camera)
+      .replaceAll("{lighting}", vars.lighting)
+      .replaceAll("{mood}", vars.mood)
+      .replaceAll("{composition}", vars.composition)
+      .replaceAll("{texture}", vars.texture);
+  }
+
+  function buildPrompt(base, avoid, tpl){
+    const v = {
+      subject: rand(db.subject),
+      action: rand(db.action),
+      wardrobe: rand(db.wardrobe),
+      palette: rand(db.palette),
+      place: rand(db.place),
+      lens: rand(db.lens),
+      camera: rand(db.camera),
+      lighting: rand(db.lighting),
+      mood: rand(db.mood),
+      composition: rand(db.composition),
+      texture: rand(db.texture),
+    };
+
+    const body = (tpl && tpl.includes("{subject}"))
+      ? applyTemplate(tpl, v)
+      : `${v.subject}, ${v.action}, wearing ${v.wardrobe}. Palette: ${v.palette}. Location: ${v.place}. Lighting: ${v.lighting}. Mood: ${v.mood}. Composition: ${v.composition}. Lens: ${v.lens}. Camera: ${v.camera}. Texture: ${v.texture}.`;
+
+    const pack = $("stylePack").value;
+    const styled = (stylePack[pack] || ((x)=>x))(body);
+
+    const refLine = state.reference ? "Use the attached reference image; keep the same identity and key visual features." : "";
+    const avoidLine = (avoid || "").trim() ? `Avoid: ${avoid.trim()}.` : "";
+    const uniq = `Unique tag: ${uuid()}.`;
+
+    return `${(base||"").trim() ? base.trim() + ". " : ""}${styled} ${refLine} ${avoidLine} ${uniq}`.replace(/\s+/g," ").trim();
+  }
+
+  // ---------- Gemini REST call (direct from browser) ----------
+  function pickFinalImagePart(responseJson){
+    const parts = responseJson?.candidates?.[0]?.content?.parts || [];
+    // В "thinking" режиме могут быть thought images; берем последний НЕ thought inlineData
+    let best = null;
+    for (const p of parts) {
+      if (p?.inlineData?.data && p?.inlineData?.mimeType) {
+        if (p.thought) continue;
+        best = { base64: p.inlineData.data, mime: p.inlineData.mimeType };
+      }
+    }
+    // fallback: если thought не проставлен
+    if (!best) {
+      for (const p of parts) {
+        if (p?.inlineData?.data && p?.inlineData?.mimeType) {
+          best = { base64: p.inlineData.data, mime: p.inlineData.mimeType };
         }
+      }
+    }
+    return best;
+  }
 
-        // --- Логика Генерации ---
+  async function generateOne(prompt, signal){
+    const apiKey = getKey();
+    if (!apiKey) throw new Error("Missing API key");
 
-        const db = {
-            subjects: [
-                "standing confidently", "sitting elegantly", "walking dynamically", 
-                "leaning against a wall", "looking over shoulder", "fixing hair",
-                "drinking coffee", "laughing candidly", "serious editorial pose"
-            ],
-            clothes: [
-                "silk slip dress", "oversized blazer", "leather biker jacket", 
-                "vintage denim jacket", "cashmere turtleneck", "evening gown",
-                "white linen shirt", "sporty chic top", "textured wool coat"
-            ],
-            colors: ["navy blue", "charcoal grey", "pure white", "emerald green", "beige", "black", "red"],
-            places: [
-                "luxury penthouse", "night city street", "underground parking", 
-                "minimalist studio", "rooftop bar", "subway station", 
-                "foggy forest", "desert dunes", "old library", "art gallery"
-            ],
-            lighting: [
-                "golden hour", "blue hour", "neon lights", "soft window light", 
-                "harsh flash", "studio lighting", "cinematic shadows"
-            ],
-            tech: [
-                "Shot on Sony A7R IV", "Shot on Leica M11", "Shot on iPhone 15 Pro", 
-                "Kodak Portra 400", "Fujifilm simulation", "35mm film grain"
-            ]
-        };
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(state.model)}:generateContent`;
 
-        const realismTag = "highly detailed skin texture, visible pores, natural imperfections, raw photo style, 8k resolution";
+    const parts = [{ text: prompt }];
+    if (state.reference) {
+      parts.push({ inline_data: { mime_type: state.reference.mimeType, data: state.reference.base64 } });
+    }
 
-        function getR(arr) {
-            return arr[Math.floor(Math.random() * arr.length)];
-        }
+    const payload = {
+      contents: [{ role: "user", parts }],
+      generationConfig: {
+        responseModalities: ["TEXT","IMAGE"],
+        imageConfig: { aspectRatio: state.aspectRatio, imageSize: state.imageSize }
+      }
+    };
 
-        function generateBatch() {
-            if (!currentSettings.hasImage) {
-                alert("Сначала загрузи изображение-референс!");
-                return;
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type":"application/json", "x-goog-api-key": apiKey },
+      body: JSON.stringify(payload),
+      signal
+    });
+
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      const msg = j?.error?.message || `HTTP ${r.status}`;
+      const e = new Error(msg);
+      e.status = r.status;
+      throw e;
+    }
+
+    const img = pickFinalImagePart(j);
+    if (!img) throw new Error("No image in response");
+    return img; // {base64, mime}
+  }
+
+  // ---------- Renderer ----------
+  function card(i, prompt){
+    const el = document.createElement("div");
+    el.className = "card";
+    el.innerHTML = `
+      <div class="thumb" id="thumb_${i}">Queued…</div>
+      <div class="meta">
+        <div class="tag">#${i+1} · ${state.model} · ${state.aspectRatio} · ${state.imageSize}</div>
+        <pre id="p_${i}"></pre>
+      </div>
+      <div class="mini">
+        <button class="mbtn" id="cp_${i}">Copy prompt</button>
+        <button class="mbtn" id="dl_${i}" disabled>Download</button>
+      </div>
+    `;
+    el.querySelector(`#p_${i}`).textContent = prompt;
+    el.querySelector(`#cp_${i}`).onclick = () => navigator.clipboard.writeText(prompt);
+    return el;
+  }
+
+  async function setThumbImage(i, mime, base64){
+    const thumb = $(`thumb_${i}`);
+    const url = `data:${mime};base64,${base64}`;
+    thumb.innerHTML = "";
+    const im = document.createElement("img");
+    im.src = url;
+    thumb.appendChild(im);
+
+    const dl = $(`dl_${i}`);
+    dl.disabled = false;
+    dl.onclick = () => {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `nanobanana_${String(i+1).padStart(3,"0")}.png`;
+      a.click();
+    };
+  }
+
+  // ---------- Queue runner (50+ images) ----------
+  async function runQueue(mode){ // mode: "prompts" | "images"
+    requireKey();
+    if (!getKey()) return;
+
+    const count = Number($("countRange").value);
+    const conc  = Number($("concRange").value);
+    const base  = $("basePrompt").value;
+    const avoid = $("avoid").value;
+    const tpl   = $("template").value;
+
+    state.prompts = Array.from({length: count}, () => buildPrompt(base, avoid, tpl));
+    state.images = [];
+
+    $("output").style.display = "block";
+    $("zipBtn").disabled = true;
+    $("copyPromptsBtn").disabled = false;
+
+    const grid = $("grid");
+    grid.innerHTML = "";
+    state.prompts.forEach((p,i)=>grid.appendChild(card(i,p)));
+
+    window.__PROMPTS_TXT = state.prompts.join("\n\n");
+
+    if (mode === "prompts"){
+      $("stopBtn").style.display = "none";
+      setProgress(count, count);
+      $("stat").textContent = `Prompts ready: ${count}`;
+      return;
+    }
+
+    // images mode
+    state.abort = new AbortController();
+    $("stopBtn").style.display = "inline-block";
+    $("genImagesBtn").disabled = true;
+    $("genPromptsBtn").disabled = true;
+
+    let done = 0;
+    let idx = 0;
+    setProgress(0, count);
+
+    async function worker(){
+      while (idx < count) {
+        const i = idx++;
+        const thumb = $(`thumb_${i}`);
+        try{
+          thumb.textContent = "Generating…";
+          // retry/backoff on 429/503
+          let attempt = 0;
+          while (true) {
+            try{
+              const img = await generateOne(state.prompts[i], state.abort.signal);
+              await setThumbImage(i, img.mime, img.base64);
+              state.images.push({
+                name: `nanobanana_${String(i+1).padStart(3,"0")}.png`,
+                mime: img.mime,
+                base64: img.base64,
+                prompt: state.prompts[i]
+              });
+              break;
+            } catch(e){
+              attempt++;
+              const status = e.status || 0;
+              if ((status === 429 || status === 503) && attempt <= 6) {
+                const backoff = Math.min(8000, 500 * Math.pow(2, attempt));
+                thumb.textContent = `Rate limit… retry in ${Math.round(backoff/1000)}s`;
+                await sleep(backoff);
+                continue;
+              }
+              throw e;
             }
-
-            const count = document.getElementById('countRange').value;
-            const extra = document.getElementById('extraContext').value;
-            const outputArea = document.getElementById('outputArea');
-            const list = document.getElementById('promptsList');
-            
-            list.innerHTML = "";
-            outputArea.style.display = "block";
-            
-            let allText = "";
-
-            for(let i=0; i<count; i++) {
-                // Строим промпт
-                let prompt = `[Attached Reference Image] `; // Тег для референса
-                
-                if (extra) prompt += `${extra}, `;
-
-                // Генерируем уникальные детали
-                prompt += `female subject, ${getR(db.subjects)}, wearing ${getR(db.colors)} ${getR(db.clothes)}. `;
-                prompt += `Located in ${getR(db.places)}. `;
-                prompt += `Lighting: ${getR(db.lighting)}. `;
-                prompt += `Technical: ${getR(db.tech)}. `;
-                prompt += `${realismTag} `;
-                prompt += `${currentSettings.ratio} --v 6.0 --style raw --s 250`;
-
-                // Визуализация
-                const div = document.createElement('div');
-                div.className = 'prompt-card';
-                div.innerHTML = `
-                    <span class="tag-info">#${i+1} | ${currentSettings.ratio.replace('--ar ', '')} | ${getR(db.places).split(' ').slice(0,2).join(' ')}</span>
-                    ${prompt}
-                `;
-                list.appendChild(div);
-
-                allText += prompt + "\n\n";
-            }
-            
-            window.generatedBatchText = allText;
+          }
+        } catch(e){
+          thumb.textContent = "Error: " + String(e.message || e);
+          thumb.style.color = "var(--bad)";
+        } finally {
+          done++;
+          setProgress(done, count);
+          await sleep(30);
         }
+      }
+    }
 
-        function copyAll() {
-            if(window.generatedBatchText) {
-                navigator.clipboard.writeText(window.generatedBatchText);
-                const btn = document.querySelector('.copy-btn');
-                const oldText = btn.innerText;
-                btn.innerText = "COPIED!";
-                setTimeout(() => btn.innerText = oldText, 2000);
-            }
-        }
+    try{
+      await Promise.all(Array.from({length: conc}, worker));
+      $("stat").textContent = `Done. Success: ${state.images.length}/${count}`;
+      $("zipBtn").disabled = (state.images.length === 0);
+    } finally {
+      $("stopBtn").style.display = "none";
+      $("genImagesBtn").disabled = false;
+      $("genPromptsBtn").disabled = false;
+      state.abort = null;
+    }
+  }
 
-    </script>
+  $("stopBtn").onclick = () => { if (state.abort) state.abort.abort(); };
+
+  $("genPromptsBtn").onclick = () => runQueue("prompts");
+  $("genImagesBtn").onclick  = () => runQueue("images");
+
+  $("copyPromptsBtn").onclick = async () => {
+    if (window.__PROMPTS_TXT) await navigator.clipboard.writeText(window.__PROMPTS_TXT);
+  };
+
+  // ---------- ZIP download (images + prompts.txt) ----------
+  function base64ToBlob(base64, mime){
+    const bin = atob(base64);
+    const len = bin.length;
+    const bytes = new Uint8Array(len);
+    for (let i=0;i<len;i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], {type:mime});
+  }
+
+  $("zipBtn").onclick = async () => {
+    if (!state.images.length) return;
+    const zip = new JSZip();
+    zip.file("prompts.txt", window.__PROMPTS_TXT || "");
+
+    // папка с изображениями
+    const folder = zip.folder("images");
+    for (const img of state.images) {
+      const blob = base64ToBlob(img.base64, img.mime);
+      folder.file(img.name, blob);
+    }
+
+    const outBlob = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(outBlob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `nanobanana_batch_${Date.now()}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // init
+  $("countVal").textContent = $("countRange").value;
+  $("concVal").textContent  = $("concRange").value;
+  setProgress(0, 1);
+</script>
 </body>
 </html>
