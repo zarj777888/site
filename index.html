@@ -3,183 +3,421 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>NanoBanana Pro Prompt+Batch Studio</title>
+  <title>NanoBanana Pro Studio</title>
+
   <style>
     :root{
-      --bg:#080808; --panel:#141414; --input:#222; --border:#333;
-      --accent:#ccff00; --text:#fff; --dim:#777; --bad:#ff4d4d;
+      --bg:#080808;
+      --panel:#141414;
+      --input:#1f1f1f;
+      --border:#2e2e2e;
+      --accent:#ccff00;
+
+      --text:#ffffff;
+      --dim:#a0a0a0;              /* было слишком темно */
+      --placeholder:#8e8e8e;      /* читаемее */
+      --bad:#ff4d4d;
+
+      /* grid controls */
+      --cols: 3;
+      --thumbH: 240px;
+
+      /* dock */
+      --dockH: 220px;
     }
-    body{background:var(--bg); color:var(--text); font-family:Inter,system-ui,-apple-system,sans-serif;
-      margin:0; padding:18px; display:flex; flex-direction:column; align-items:center; gap:14px;}
-    .wrap{width:100%; max-width:1100px;}
-    .panel{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:14px; box-shadow:0 18px 50px rgba(0,0,0,.55);}
-    .upload{height:220px; border:2px dashed var(--border); border-radius:16px; cursor:pointer; position:relative;
-      display:flex; align-items:center; justify-content:center; overflow:hidden; background:rgba(255,255,255,.02); transition:.2s;}
+
+    body{
+      background:var(--bg);
+      color:var(--text);
+      font-family:Inter,system-ui,-apple-system,sans-serif;
+      margin:0;
+      padding:18px;
+      padding-bottom: calc(var(--dockH) + 24px); /* чтобы док не перекрывал контент */
+    }
+
+    .wrap{max-width:1200px; margin:0 auto;}
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:14px;
+      box-shadow:0 18px 50px rgba(0,0,0,.55);
+    }
+
+    /* ---------- TOP AREA ---------- */
+    .upload{
+      height:200px;
+      border:2px dashed var(--border);
+      border-radius:16px;
+      cursor:pointer;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      background:rgba(255,255,255,.02);
+      transition:.2s;
+      margin-bottom:12px;
+    }
     .upload:hover{border-color:var(--accent); background:rgba(204,255,0,.05);}
     .upload p{color:var(--dim); margin:0; font-size:14px;}
     #fileInput{display:none;}
     #preview{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:#000; display:none;}
-    .row{display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;}
-    .group{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
-    .label{font-size:12px; font-weight:900; color:var(--dim); text-transform:uppercase; letter-spacing:1px;}
-    .btns{display:flex; background:#000; border:1px solid var(--border); border-radius:10px; padding:4px;}
-    .tbtn{background:transparent; border:0; color:var(--dim); padding:8px 14px; font-weight:800; border-radius:8px; cursor:pointer; font-size:13px;}
-    .tbtn:hover{color:#fff;}
-    .tbtn.active{background:var(--accent); color:#000;}
-    .field{display:flex; align-items:center; gap:10px; background:#000; border:1px solid var(--border); border-radius:12px; padding:10px 12px;}
-    .field input,.field select{background:transparent; border:0; outline:0; color:#fff; font-size:13px;}
-    .field small{color:var(--dim); font-size:12px;}
-    .slider{display:flex; align-items:center; gap:10px; background:#000; border:1px solid var(--border); border-radius:12px; padding:8px 12px;}
-    input[type=range]{-webkit-appearance:none; width:150px; height:4px; background:#333; border-radius:2px; outline:none;}
-    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent); cursor:pointer; box-shadow:0 0 10px rgba(204,255,0,.5);}
-    .mono{font-family:ui-monospace,Consolas,monospace; font-weight:900; color:var(--accent); width:36px; text-align:right;}
-    .inputs{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;}
-    .in{flex:1; min-width:280px; display:flex; align-items:center; gap:10px; background:var(--input); border:1px solid transparent; border-radius:12px; padding:0 12px;}
-    .in:focus-within{border-color:#444;}
-    .in input{width:100%; background:transparent; border:0; outline:0; color:#fff; padding:14px 0; font-size:14px;}
-    .actions{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;}
-    .abtn{height:46px; padding:0 18px; border-radius:12px; border:0; cursor:pointer; font-weight:900; font-size:14px; background:#333; color:#aaa;}
-    .abtn:hover{background:var(--accent); color:#000;}
-    .abtn.alt{background:#000; border:1px solid var(--border); color:#ddd;}
-    .abtn.alt:hover{border-color:var(--accent); color:#fff;}
-    .abtn.danger{background:transparent; border:1px solid var(--bad); color:var(--bad); display:none;}
-    .abtn.danger:hover{background:rgba(255,77,77,.1);}
-    .out{display:none;}
-    .topbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:10px;}
-    .progress{flex:1; min-width:260px; height:10px; border-radius:999px; border:1px solid var(--border); background:#101010; overflow:hidden;}
+
+    .out{margin-top:12px;}
+    .topbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .progress{
+      flex:1;
+      min-width:260px;
+      height:10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#101010;
+      overflow:hidden;
+    }
     .progress > div{height:100%; width:0%; background:var(--accent);}
-    .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
-    @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr);}}
-    @media(max-width:560px){.grid{grid-template-columns:1fr;}}
-    .card{background:#111; border:1px solid #222; border-radius:14px; overflow:hidden; display:flex; flex-direction:column;}
-    .thumb{height:220px; background:#000; display:flex; align-items:center; justify-content:center; color:#777; font-size:12px;}
+    .stat{
+      color:var(--dim);
+      font-size:13px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(var(--cols), minmax(0, 1fr));
+      gap:12px;
+    }
+    @media(max-width:950px){ :root{ --cols: 2; } }
+    @media(max-width:560px){ :root{ --cols: 1; } }
+
+    .card{
+      background:#0f0f0f;
+      border:1px solid #1e1e1e;
+      border-radius:14px;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .thumb{
+      height:var(--thumbH);
+      background:#000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#8a8a8a;
+      font-size:12px;
+    }
     .thumb img{width:100%; height:100%; object-fit:cover;}
     .meta{padding:12px;}
-    .meta .tag{color:#777; font-size:11px; text-transform:uppercase; letter-spacing:1px;}
-    .meta pre{margin:8px 0 0 0; white-space:pre-wrap; word-break:break-word; color:#ccc; font-size:12px; line-height:1.35;
-      font-family:ui-monospace,Consolas,monospace; max-height:160px; overflow:auto;}
-    .mini{display:flex; gap:10px; padding:12px; padding-top:0;}
-    .mbtn{flex:1; height:36px; border-radius:10px; border:1px solid var(--border); background:#000; color:#ddd; cursor:pointer; font-weight:900; font-size:12px;}
+    .tag{
+      color:#9a9a9a;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:1px;
+    }
+    pre{
+      margin:8px 0 0 0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      color:#d0d0d0;
+      font-size:12.5px;
+      line-height:1.35;
+      font-family:ui-monospace,Consolas,monospace;
+      max-height:160px;
+      overflow:auto;
+    }
+    .mini{
+      display:flex;
+      gap:10px;
+      padding:12px;
+      padding-top:0;
+    }
+    .mbtn{
+      flex:1;
+      height:36px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:#000;
+      color:#e0e0e0;
+      cursor:pointer;
+      font-weight:900;
+      font-size:12px;
+    }
     .mbtn:hover{border-color:var(--accent); color:#fff;}
+    .mbtn:disabled{opacity:.4; cursor:not-allowed;}
+
+    /* ---------- DOCK (BOTTOM FIXED) ---------- */
+    .dock{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      padding:14px 18px;
+      background: rgba(16,16,16,.78);
+      border-top: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .dock .wrap{max-width:1200px; margin:0 auto;}
+    .row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .group{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+    .label{
+      font-size:12px;
+      font-weight:950;
+      color:var(--dim);
+      text-transform:uppercase;
+      letter-spacing:1px;
+    }
+    .btns{
+      display:flex;
+      background:#000;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:4px;
+    }
+    .tbtn{
+      background:transparent;
+      border:0;
+      color:#bdbdbd;
+      padding:8px 14px;
+      font-weight:950;
+      border-radius:8px;
+      cursor:pointer;
+      font-size:13px;
+    }
+    .tbtn:hover{color:#fff;}
+    .tbtn.active{background:var(--accent); color:#000;}
+
+    .field{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background:#000;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+    }
+    .field input,.field select{
+      background:transparent;
+      border:0;
+      outline:0;
+      color:#fff;
+      font-size:14px;
+      min-width:130px;
+    }
+    .field small{color:var(--dim); font-size:12px; font-weight:800;}
+
+    .in{
+      flex:1;
+      min-width:260px;
+      display:flex;
+      align-items:center;
+      background:var(--input);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:12px;
+      padding:0 12px;
+    }
+    .in:focus-within{border-color: rgba(204,255,0,.35);}
+    .in input{
+      width:100%;
+      background:transparent;
+      border:0;
+      outline:0;
+      color:#fff;
+      padding:14px 0;
+      font-size:14px;
+    }
+    .in input::placeholder{color:var(--placeholder);}
+
+    .actions{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;}
+    .abtn{
+      height:46px;
+      padding:0 18px;
+      border-radius:12px;
+      border:0;
+      cursor:pointer;
+      font-weight:950;
+      font-size:14px;
+      background:#2d2d2d;
+      color:#cfcfcf;
+    }
+    .abtn:hover{background:var(--accent); color:#000;}
+    .abtn.alt{background:#000; border:1px solid var(--border); color:#eee;}
+    .abtn.alt:hover{border-color:var(--accent); color:#fff;}
+    .abtn.danger{
+      background:transparent;
+      border:1px solid var(--bad);
+      color:var(--bad);
+      display:none;
+    }
+
+    .slider{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background:#000;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:8px 12px;
+    }
+    input[type=range]{
+      -webkit-appearance:none;
+      width:140px;
+      height:4px;
+      background:#333;
+      border-radius:2px;
+      outline:none;
+    }
+    input[type=range]::-webkit-slider-thumb{
+      -webkit-appearance:none;
+      width:16px; height:16px;
+      border-radius:50%;
+      background:var(--accent);
+      cursor:pointer;
+      box-shadow:0 0 10px rgba(204,255,0,.5);
+    }
+    .mono{
+      font-family:ui-monospace,Consolas,monospace;
+      font-weight:950;
+      color:var(--accent);
+      width:40px;
+      text-align:right;
+    }
+
+    /* Modal */
     .modal{position:fixed; inset:0; background:rgba(0,0,0,.68); display:none; align-items:center; justify-content:center; padding:18px;}
     .box{width:100%; max-width:620px; background:#0f0f0f; border:1px solid #222; border-radius:18px; padding:16px; box-shadow:0 25px 80px rgba(0,0,0,.6);}
     .box h3{margin:0 0 8px 0; font-size:16px;}
-    .box p{margin:0 0 12px 0; color:#888; font-size:13px; line-height:1.35;}
+    .box p{margin:0 0 12px 0; color:#9a9a9a; font-size:13px; line-height:1.35;}
     .box .row2{display:flex; gap:10px; flex-wrap:wrap;}
-    .box input{flex:1; min-width:260px; background:#000; border:1px solid #333; border-radius:12px; padding:12px 14px; color:#fff; outline:none;
-      font-family:ui-monospace,Consolas,monospace;}
+    .box input{flex:1; min-width:260px; background:#000; border:1px solid #333; border-radius:12px; padding:12px 14px; color:#fff; outline:none; font-family:ui-monospace,Consolas,monospace;}
     .save{height:44px; padding:0 16px; border-radius:12px; border:0; background:var(--accent); color:#000; font-weight:950; cursor:pointer;}
-    .hint{color:#777; font-size:12px; margin-top:10px;}
   </style>
-
-  <!-- JSZip (клиентский ZIP) -->
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
+
 <body>
-  <div class="wrap upload panel" id="dropZone">
-    <p id="uploadText">Нажми или перетащи сюда фото (Reference optional)</p>
-    <img id="preview" alt="preview"/>
-    <input type="file" id="fileInput" accept="image/*"/>
-  </div>
-
-  <div class="wrap panel">
-    <div class="row">
-      <div class="group">
-        <span class="label">Model</span>
-        <div class="btns" id="modelGroup">
-          <button class="tbtn active" data-model="gemini-3-pro-image-preview">Pro</button>
-          <button class="tbtn" data-model="gemini-2.5-flash-image">Flash</button>
-        </div>
-      </div>
-
-      <div class="group">
-        <span class="label">Ratio</span>
-        <div class="btns" id="ratioGroup">
-          <button class="tbtn" data-ratio="1:1">1:1</button>
-          <button class="tbtn" data-ratio="3:4">3:4</button>
-          <button class="tbtn" data-ratio="4:3">4:3</button>
-          <button class="tbtn active" data-ratio="16:9">16:9</button>
-          <button class="tbtn" data-ratio="9:16">9:16</button>
-        </div>
-      </div>
-
-      <div class="group">
-        <span class="label">Quality</span>
-        <div class="btns" id="sizeGroup">
-          <button class="tbtn active" data-size="1K">1K</button>
-          <button class="tbtn" data-size="2K">2K</button>
-          <button class="tbtn" data-size="4K">4K</button>
-        </div>
-      </div>
-
-      <div class="group">
-        <span class="label">Count</span>
-        <div class="slider">
-          <span class="mono" id="countVal">50</span>
-          <input type="range" id="countRange" min="1" max="200" value="50"/>
-        </div>
-      </div>
-
-      <div class="group">
-        <span class="label">Concurrency</span>
-        <div class="slider">
-          <span class="mono" id="concVal">4</span>
-          <input type="range" id="concRange" min="1" max="12" value="4"/>
-        </div>
-      </div>
-
-      <div class="group">
-        <span class="label">Style pack</span>
-        <div class="field">
-          <select id="stylePack">
-            <option value="editorial">Editorial / Fashion</option>
-            <option value="cinema">Cinematic</option>
-            <option value="product">Product</option>
-            <option value="archviz">Archviz</option>
-            <option value="anime">Anime</option>
-            <option value="infographic">Infographic / Text</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="group">
-        <span class="label">Key</span>
-        <button class="abtn alt" id="keyBtn">Set API key</button>
-      </div>
+  <div class="wrap">
+    <div class="upload panel" id="dropZone">
+      <p id="uploadText">Нажми или перетащи сюда фото (Reference optional)</p>
+      <img id="preview" alt="preview"/>
+      <input type="file" id="fileInput" accept="image/*"/>
     </div>
 
-    <div class="inputs">
-      <div class="in"><input id="basePrompt" placeholder="Base prompt (например: 'brutal cyberpunk street portrait, wet asphalt')"/></div>
-      <div class="in"><input id="avoid" placeholder="Avoid (через запятую): watermark, blurry, extra fingers, bad text..."/></div>
-      <div class="in"><input id="template" placeholder="(optional) Template: {subject}, {action}, {place} ..."/></div>
-    </div>
-
-    <div class="actions">
-      <button class="abtn" id="genPromptsBtn">Generate prompts</button>
-      <button class="abtn" id="genImagesBtn">Generate images</button>
-      <button class="abtn alt" id="zipBtn" disabled>Download ZIP</button>
-      <button class="abtn alt" id="copyPromptsBtn" disabled>Copy prompts</button>
-      <button class="abtn danger" id="stopBtn">STOP</button>
+    <div class="panel out" id="output">
+      <div class="topbar">
+        <div class="progress"><div id="bar"></div></div>
+        <div class="stat" id="stat">Idle</div>
+      </div>
+      <div class="grid" id="grid"></div>
     </div>
   </div>
 
-  <div class="wrap panel out" id="output">
-    <div class="topbar">
-      <div class="progress"><div id="bar"></div></div>
-      <div class="field"><small id="stat">Idle</small></div>
+  <!-- Dock bottom -->
+  <div class="dock">
+    <div class="wrap">
+      <div class="row">
+        <div class="group">
+          <span class="label">Model</span>
+          <div class="btns" id="modelGroup">
+            <button class="tbtn active" data-model="gemini-3-pro-image-preview">Pro</button>
+            <button class="tbtn" data-model="gemini-2.5-flash-image">Flash</button>
+          </div>
+        </div>
+
+        <div class="group">
+          <span class="label">Ratio</span>
+          <div class="btns" id="ratioGroup">
+            <button class="tbtn" data-ratio="1:1">1:1</button>
+            <button class="tbtn" data-ratio="3:4">3:4</button>
+            <button class="tbtn" data-ratio="4:3">4:3</button>
+            <button class="tbtn active" data-ratio="16:9">16:9</button>
+            <button class="tbtn" data-ratio="9:16">9:16</button>
+          </div>
+        </div>
+
+        <div class="group">
+          <span class="label">Quality</span>
+          <div class="btns" id="sizeGroup">
+            <button class="tbtn active" data-size="1K">1K</button>
+            <button class="tbtn" data-size="2K">2K</button>
+            <button class="tbtn" data-size="4K">4K</button>
+          </div>
+        </div>
+
+        <div class="group">
+          <span class="label">Count</span>
+          <div class="slider">
+            <span class="mono" id="countVal">50</span>
+            <input type="range" id="countRange" min="1" max="200" value="50"/>
+          </div>
+        </div>
+
+        <div class="group">
+          <span class="label">Conc.</span>
+          <div class="slider">
+            <span class="mono" id="concVal">4</span>
+            <input type="range" id="concRange" min="1" max="12" value="4"/>
+          </div>
+        </div>
+
+        <div class="group">
+          <span class="label">Cols</span>
+          <div class="slider">
+            <span class="mono" id="colsVal">3</span>
+            <input type="range" id="colsRange" min="1" max="6" value="3"/>
+          </div>
+        </div>
+
+        <div class="group">
+          <span class="label">Tile</span>
+          <div class="slider">
+            <span class="mono" id="tileVal">240</span>
+            <input type="range" id="tileRange" min="140" max="420" value="240"/>
+          </div>
+        </div>
+
+        <div class="group">
+          <span class="label">Key</span>
+          <button class="abtn alt" id="keyBtn">Set API key</button>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <div class="in"><input id="basePrompt" placeholder="Base prompt (например: brutal cyberpunk street portrait, wet asphalt)"/></div>
+        <div class="in"><input id="avoid" placeholder="Avoid: watermark, blurry, extra fingers, bad text..."/></div>
+        <div class="in"><input id="template" placeholder="Template: {subject}, {action}, {place} ... (optional)"/></div>
+      </div>
+
+      <div class="actions">
+        <button class="abtn" id="genPromptsBtn">Generate prompts</button>
+        <button class="abtn" id="genImagesBtn">Generate images</button>
+        <button class="abtn alt" id="copyPromptsBtn" disabled>Copy prompts</button>
+        <button class="abtn danger" id="stopBtn">STOP</button>
+      </div>
     </div>
-    <div class="grid" id="grid"></div>
   </div>
 
+  <!-- Modal key -->
   <div class="modal" id="modal">
     <div class="box">
       <h3>Gemini API key</h3>
-      <p>Ключ хранится только в текущей вкладке (sessionStorage). Для запросов используется заголовок <code>x-goog-api-key</code>.</p>
+      <p>Ключ нужен только для генерации изображений (REST использует заголовок <code>x-goog-api-key</code>). [page:1]</p>
       <div class="row2">
         <input id="apiKeyInput" placeholder="AIza..."/>
         <button class="save" id="saveKey">Save</button>
       </div>
-      <div class="hint">Если ты используешь не официальный Gemini key, а сторонний Bearer-ключ от прокси (dk-/sk-), скажи — адаптирую под твой эндпоинт.</div>
     </div>
   </div>
 
@@ -188,11 +426,10 @@
   const state = {
     model: "gemini-3-pro-image-preview",
     aspectRatio: "16:9",
-    imageSize: "1K",
-    reference: null, // {mimeType, base64}
+    imageSize: "1K", // 1K/2K/4K (uppercase K) [page:1]
+    reference: null,
     abort: null,
-    prompts: [],
-    images: [], // {name, mime, base64, prompt}
+    prompts: []
   };
 
   const $ = (id) => document.getElementById(id);
@@ -200,11 +437,10 @@
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   function uuid(){
-    return (crypto?.randomUUID ? crypto.randomUUID() :
-      (Date.now() + "-" + Math.random().toString(16).slice(2)));
+    return (crypto?.randomUUID ? crypto.randomUUID() : (Date.now() + "-" + Math.random().toString(16).slice(2)));
   }
 
-  // ---------- UI wiring ----------
+  // ---------- Toggles ----------
   function wireToggle(groupId, attr, setter){
     const root = $(groupId);
     root.querySelectorAll("button.tbtn").forEach(btn => {
@@ -219,19 +455,37 @@
   wireToggle("ratioGroup","data-ratio",(v)=>state.aspectRatio=v);
   wireToggle("sizeGroup","data-size",(v)=>state.imageSize=v);
 
+  // sliders
   $("countRange").addEventListener("input", e => $("countVal").textContent = e.target.value);
   $("concRange").addEventListener("input", e => $("concVal").textContent = e.target.value);
 
+  // grid controls
+  function setCols(n){
+    document.documentElement.style.setProperty("--cols", n);
+    $("colsVal").textContent = n;
+  }
+  function setTile(px){
+    document.documentElement.style.setProperty("--thumbH", px + "px");
+    $("tileVal").textContent = px;
+  }
+  $("colsRange").addEventListener("input", e => setCols(e.target.value));
+  $("tileRange").addEventListener("input", e => setTile(e.target.value));
+  setCols($("colsRange").value);
+  setTile($("tileRange").value);
+
+  // ---------- Progress ----------
   function setProgress(done,total){
     const pct = total ? Math.round(done/total*100) : 0;
     $("bar").style.width = pct + "%";
     $("stat").textContent = `${done}/${total} (${pct}%)`;
   }
+  setProgress(0, 1);
 
   // ---------- API key modal ----------
   function getKey(){ return sessionStorage.getItem("GEMINI_API_KEY") || ""; }
-  function requireKey(){
+  function requireKeyForImages(){
     if (!getKey()) $("modal").style.display = "flex";
+    return !!getKey();
   }
   $("keyBtn").onclick = () => { $("modal").style.display = "flex"; };
   $("saveKey").onclick = () => {
@@ -242,7 +496,7 @@
     $("modal").style.display = "none";
   };
 
-  // ---------- Upload reference image ----------
+  // ---------- Upload reference ----------
   const dropZone = $("dropZone");
   const fileInput = $("fileInput");
   const preview = $("preview");
@@ -251,14 +505,11 @@
   dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.style.borderColor = "var(--accent)"; });
   dropZone.addEventListener("dragleave", () => { dropZone.style.borderColor = "var(--border)"; });
   dropZone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    dropZone.style.borderColor = "var(--border)";
-    const f = e.dataTransfer.files?.[0];
-    if (f) loadFile(f);
+    e.preventDefault(); dropZone.style.borderColor = "var(--border)";
+    const f = e.dataTransfer.files?.[0]; if (f) loadFile(f);
   });
   fileInput.addEventListener("change", (e) => {
-    const f = e.target.files?.[0];
-    if (f) loadFile(f);
+    const f = e.target.files?.[0]; if (f) loadFile(f);
   });
 
   function loadFile(file){
@@ -277,41 +528,22 @@
 
   // ---------- Prompt engine ----------
   const db = {
-    subject: ["female model","male model","androgynous model","street photographer","chef","architect","cyberpunk courier","business executive","boxer","dancer"],
-    action: ["standing confidently","walking dynamically","sitting elegantly","looking over shoulder","laughing candidly","serious editorial pose","adjusting jacket","checking phone","holding a coffee","mid-motion"],
-    wardrobe: ["oversized blazer","silk slip dress","leather biker jacket","cashmere turtleneck","white linen shirt","tailored suit","techwear jacket","evening gown"],
-    palette: ["monochrome black","navy & gold","emerald & beige","red accent on neutral","pastel minimal","neon magenta & cyan","warm earth tones"],
-    place: ["night city street","minimalist studio","rooftop bar","underground parking","old library","art gallery","foggy forest","desert dunes","rainy alley","luxury penthouse"],
-    lens: ["35mm","50mm","85mm","24mm wide angle"],
+    subject: ["female model","male model","androgynous model","street photographer","chef","architect","cyberpunk courier"],
+    action: ["standing confidently","walking dynamically","sitting elegantly","looking over shoulder","laughing candidly","serious editorial pose"],
+    wardrobe: ["oversized blazer","silk slip dress","leather biker jacket","cashmere turtleneck","tailored suit","techwear jacket"],
+    place: ["night city street","minimalist studio","rooftop bar","underground parking","old library","art gallery","rainy alley"],
+    lighting: ["golden hour","blue hour","neon rim light","soft window light","hard flash","cinematic shadows"],
     camera: ["Sony A7R IV","Leica M11","ARRI Alexa","iPhone 15 Pro"],
-    lighting: ["golden hour","blue hour","neon rim light","soft window light","hard flash","studio softbox","cinematic shadows","overcast diffused light"],
-    mood: ["clean editorial","gritty documentary","high fashion","noir","dreamy","hyperreal","minimal luxury","futuristic"],
-    composition: ["rule of thirds","centered symmetry","close-up portrait","full body shot","low angle","high angle","subtle dutch tilt","leading lines"],
-    texture: ["natural skin texture","film grain","crisp micro-contrast","soft haze","sharp fabric weave","gentle bloom highlights"]
   };
 
-  const stylePack = {
-    editorial: (x)=>`Editorial fashion photo. ${x}. Ultra realistic, clean styling.`,
-    cinema: (x)=>`Cinematic still frame, dramatic storytelling. ${x}. Color graded, moody.`,
-    product: (x)=>`Premium product photography look. ${x}. Perfect lighting, minimal background.`,
-    archviz: (x)=>`Photoreal architectural visualization vibe. ${x}. Accurate perspective.`,
-    anime: (x)=>`Anime key visual. ${x}. Clean linework, detailed shading.`,
-    infographic: (x)=>`Infographic design with legible typography. ${x}. High clarity, clean layout.`
-  };
-
-  function applyTemplate(tpl, vars){
+  function applyTemplate(tpl, v){
     return tpl
-      .replaceAll("{subject}", vars.subject)
-      .replaceAll("{action}", vars.action)
-      .replaceAll("{wardrobe}", vars.wardrobe)
-      .replaceAll("{palette}", vars.palette)
-      .replaceAll("{place}", vars.place)
-      .replaceAll("{lens}", vars.lens)
-      .replaceAll("{camera}", vars.camera)
-      .replaceAll("{lighting}", vars.lighting)
-      .replaceAll("{mood}", vars.mood)
-      .replaceAll("{composition}", vars.composition)
-      .replaceAll("{texture}", vars.texture);
+      .replaceAll("{subject}", v.subject)
+      .replaceAll("{action}", v.action)
+      .replaceAll("{wardrobe}", v.wardrobe)
+      .replaceAll("{place}", v.place)
+      .replaceAll("{lighting}", v.lighting)
+      .replaceAll("{camera}", v.camera);
   }
 
   function buildPrompt(base, avoid, tpl){
@@ -319,97 +551,28 @@
       subject: rand(db.subject),
       action: rand(db.action),
       wardrobe: rand(db.wardrobe),
-      palette: rand(db.palette),
       place: rand(db.place),
-      lens: rand(db.lens),
-      camera: rand(db.camera),
       lighting: rand(db.lighting),
-      mood: rand(db.mood),
-      composition: rand(db.composition),
-      texture: rand(db.texture),
+      camera: rand(db.camera),
     };
 
     const body = (tpl && tpl.includes("{subject}"))
       ? applyTemplate(tpl, v)
-      : `${v.subject}, ${v.action}, wearing ${v.wardrobe}. Palette: ${v.palette}. Location: ${v.place}. Lighting: ${v.lighting}. Mood: ${v.mood}. Composition: ${v.composition}. Lens: ${v.lens}. Camera: ${v.camera}. Texture: ${v.texture}.`;
-
-    const pack = $("stylePack").value;
-    const styled = (stylePack[pack] || ((x)=>x))(body);
+      : `${v.subject}, ${v.action}, wearing ${v.wardrobe}. Location: ${v.place}. Lighting: ${v.lighting}. Camera: ${v.camera}.`;
 
     const refLine = state.reference ? "Use the attached reference image; keep the same identity and key visual features." : "";
     const avoidLine = (avoid || "").trim() ? `Avoid: ${avoid.trim()}.` : "";
     const uniq = `Unique tag: ${uuid()}.`;
 
-    return `${(base||"").trim() ? base.trim() + ". " : ""}${styled} ${refLine} ${avoidLine} ${uniq}`.replace(/\s+/g," ").trim();
+    return `${(base||"").trim() ? base.trim() + ". " : ""}${body} ${refLine} ${avoidLine} ${uniq}`.replace(/\s+/g," ").trim();
   }
 
-  // ---------- Gemini REST call (direct from browser) ----------
-  function pickFinalImagePart(responseJson){
-    const parts = responseJson?.candidates?.[0]?.content?.parts || [];
-    // В "thinking" режиме могут быть thought images; берем последний НЕ thought inlineData
-    let best = null;
-    for (const p of parts) {
-      if (p?.inlineData?.data && p?.inlineData?.mimeType) {
-        if (p.thought) continue;
-        best = { base64: p.inlineData.data, mime: p.inlineData.mimeType };
-      }
-    }
-    // fallback: если thought не проставлен
-    if (!best) {
-      for (const p of parts) {
-        if (p?.inlineData?.data && p?.inlineData?.mimeType) {
-          best = { base64: p.inlineData.data, mime: p.inlineData.mimeType };
-        }
-      }
-    }
-    return best;
-  }
-
-  async function generateOne(prompt, signal){
-    const apiKey = getKey();
-    if (!apiKey) throw new Error("Missing API key");
-
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(state.model)}:generateContent`;
-
-    const parts = [{ text: prompt }];
-    if (state.reference) {
-      parts.push({ inline_data: { mime_type: state.reference.mimeType, data: state.reference.base64 } });
-    }
-
-    const payload = {
-      contents: [{ role: "user", parts }],
-      generationConfig: {
-        responseModalities: ["TEXT","IMAGE"],
-        imageConfig: { aspectRatio: state.aspectRatio, imageSize: state.imageSize }
-      }
-    };
-
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type":"application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify(payload),
-      signal
-    });
-
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) {
-      const msg = j?.error?.message || `HTTP ${r.status}`;
-      const e = new Error(msg);
-      e.status = r.status;
-      throw e;
-    }
-
-    const img = pickFinalImagePart(j);
-    if (!img) throw new Error("No image in response");
-    return img; // {base64, mime}
-  }
-
-  // ---------- Renderer ----------
-  function card(i, prompt){
+  // ---------- Render cards ----------
+  function makeCard(i, prompt){
     const el = document.createElement("div");
     el.className = "card";
     el.innerHTML = `
-      <div class="thumb" id="thumb_${i}">Queued…</div>
+      <div class="thumb" id="thumb_${i}">Prompt ready</div>
       <div class="meta">
         <div class="tag">#${i+1} · ${state.model} · ${state.aspectRatio} · ${state.imageSize}</div>
         <pre id="p_${i}"></pre>
@@ -442,10 +605,79 @@
     };
   }
 
-  // ---------- Queue runner (50+ images) ----------
-  async function runQueue(mode){ // mode: "prompts" | "images"
-    requireKey();
-    if (!getKey()) return;
+  // ---------- Gemini REST (direct) ----------
+  function pickFinalImagePart(j){
+    const parts = j?.candidates?.[0]?.content?.parts || [];
+    for (let k = parts.length - 1; k >= 0; k--){
+      const p = parts[k];
+      if (p?.inlineData?.data && p?.inlineData?.mimeType && !p.thought) {
+        return { base64: p.inlineData.data, mime: p.inlineData.mimeType };
+      }
+    }
+    for (let k = parts.length - 1; k >= 0; k--){
+      const p = parts[k];
+      if (p?.inlineData?.data && p?.inlineData?.mimeType) {
+        return { base64: p.inlineData.data, mime: p.inlineData.mimeType };
+      }
+    }
+    return null;
+  }
+
+  async function generateOne(prompt, signal){
+    const apiKey = getKey();
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(state.model)}:generateContent`;
+
+    const parts = [{ text: prompt }];
+    if (state.reference) parts.push({ inline_data: { mime_type: state.reference.mimeType, data: state.reference.base64 } });
+
+    const payload = {
+      contents: [{ role: "user", parts }],
+      generationConfig: {
+        responseModalities: ["TEXT","IMAGE"],
+        imageConfig: { aspectRatio: state.aspectRatio, imageSize: state.imageSize } // 1K/2K/4K [page:1]
+      }
+    };
+
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type":"application/json", "x-goog-api-key": apiKey }, // [page:1]
+      body: JSON.stringify(payload),
+      signal
+    });
+
+    const j = await r.json().catch(()=> ({}));
+    if (!r.ok) {
+      const msg = j?.error?.message || `HTTP ${r.status}`;
+      const e = new Error(msg);
+      e.status = r.status;
+      throw e;
+    }
+    const img = pickFinalImagePart(j);
+    if (!img) throw new Error("No image in response");
+    return img;
+  }
+
+  // ---------- Batch runners ----------
+  async function runPromptsOnly(){
+    const count = Number($("countRange").value);
+    const base  = $("basePrompt").value;
+    const avoid = $("avoid").value;
+    const tpl   = $("template").value;
+
+    state.prompts = Array.from({length: count}, () => buildPrompt(base, avoid, tpl));
+    window.__PROMPTS_TXT = state.prompts.join("\n\n");
+
+    const grid = $("grid");
+    grid.innerHTML = "";
+    state.prompts.forEach((p,i)=> grid.appendChild(makeCard(i,p)));
+
+    $("copyPromptsBtn").disabled = false;
+    $("stopBtn").style.display = "none";
+    setProgress(count, count);
+  }
+
+  async function runImages(){
+    if (!requireKeyForImages()) return;
 
     const count = Number($("countRange").value);
     const conc  = Number($("concRange").value);
@@ -454,26 +686,14 @@
     const tpl   = $("template").value;
 
     state.prompts = Array.from({length: count}, () => buildPrompt(base, avoid, tpl));
-    state.images = [];
-
-    $("output").style.display = "block";
-    $("zipBtn").disabled = true;
-    $("copyPromptsBtn").disabled = false;
+    window.__PROMPTS_TXT = state.prompts.join("\n\n");
 
     const grid = $("grid");
     grid.innerHTML = "";
-    state.prompts.forEach((p,i)=>grid.appendChild(card(i,p)));
+    state.prompts.forEach((p,i)=> grid.appendChild(makeCard(i,p)));
 
-    window.__PROMPTS_TXT = state.prompts.join("\n\n");
+    $("copyPromptsBtn").disabled = false;
 
-    if (mode === "prompts"){
-      $("stopBtn").style.display = "none";
-      setProgress(count, count);
-      $("stat").textContent = `Prompts ready: ${count}`;
-      return;
-    }
-
-    // images mode
     state.abort = new AbortController();
     $("stopBtn").style.display = "inline-block";
     $("genImagesBtn").disabled = true;
@@ -489,18 +709,11 @@
         const thumb = $(`thumb_${i}`);
         try{
           thumb.textContent = "Generating…";
-          // retry/backoff on 429/503
           let attempt = 0;
           while (true) {
             try{
               const img = await generateOne(state.prompts[i], state.abort.signal);
               await setThumbImage(i, img.mime, img.base64);
-              state.images.push({
-                name: `nanobanana_${String(i+1).padStart(3,"0")}.png`,
-                mime: img.mime,
-                base64: img.base64,
-                prompt: state.prompts[i]
-              });
               break;
             } catch(e){
               attempt++;
@@ -527,8 +740,6 @@
 
     try{
       await Promise.all(Array.from({length: conc}, worker));
-      $("stat").textContent = `Done. Success: ${state.images.length}/${count}`;
-      $("zipBtn").disabled = (state.images.length === 0);
     } finally {
       $("stopBtn").style.display = "none";
       $("genImagesBtn").disabled = false;
@@ -539,47 +750,12 @@
 
   $("stopBtn").onclick = () => { if (state.abort) state.abort.abort(); };
 
-  $("genPromptsBtn").onclick = () => runQueue("prompts");
-  $("genImagesBtn").onclick  = () => runQueue("images");
+  $("genPromptsBtn").onclick = runPromptsOnly;
+  $("genImagesBtn").onclick = runImages;
 
   $("copyPromptsBtn").onclick = async () => {
     if (window.__PROMPTS_TXT) await navigator.clipboard.writeText(window.__PROMPTS_TXT);
   };
-
-  // ---------- ZIP download (images + prompts.txt) ----------
-  function base64ToBlob(base64, mime){
-    const bin = atob(base64);
-    const len = bin.length;
-    const bytes = new Uint8Array(len);
-    for (let i=0;i<len;i++) bytes[i] = bin.charCodeAt(i);
-    return new Blob([bytes], {type:mime});
-  }
-
-  $("zipBtn").onclick = async () => {
-    if (!state.images.length) return;
-    const zip = new JSZip();
-    zip.file("prompts.txt", window.__PROMPTS_TXT || "");
-
-    // папка с изображениями
-    const folder = zip.folder("images");
-    for (const img of state.images) {
-      const blob = base64ToBlob(img.base64, img.mime);
-      folder.file(img.name, blob);
-    }
-
-    const outBlob = await zip.generateAsync({ type: "blob" });
-    const url = URL.createObjectURL(outBlob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `nanobanana_batch_${Date.now()}.zip`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // init
-  $("countVal").textContent = $("countRange").value;
-  $("concVal").textContent  = $("concRange").value;
-  setProgress(0, 1);
 </script>
 </body>
 </html>
