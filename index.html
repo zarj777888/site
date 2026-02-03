@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>NanoBanana Pro Studio</title>
+  <title>NanoBanana Pro — Ultra Realism Batch Studio</title>
 
   <style>
     :root{
@@ -14,8 +14,8 @@
       --accent:#ccff00;
 
       --text:#ffffff;
-      --dim:#a0a0a0;              /* было слишком темно */
-      --placeholder:#8e8e8e;      /* читаемее */
+      --dim:#a8a8a8;
+      --placeholder:#909090;
       --bad:#ff4d4d;
 
       /* grid controls */
@@ -23,19 +23,20 @@
       --thumbH: 240px;
 
       /* dock */
-      --dockH: 220px;
+      --dockH: 240px;
     }
 
+    *{box-sizing:border-box;}
     body{
       background:var(--bg);
       color:var(--text);
       font-family:Inter,system-ui,-apple-system,sans-serif;
       margin:0;
       padding:18px;
-      padding-bottom: calc(var(--dockH) + 24px); /* чтобы док не перекрывал контент */
+      padding-bottom: calc(var(--dockH) + 24px);
     }
 
-    .wrap{max-width:1200px; margin:0 auto;}
+    .wrap{max-width:1220px; margin:0 auto;}
     .panel{
       background:var(--panel);
       border:1px solid var(--border);
@@ -86,8 +87,9 @@
     .stat{
       color:var(--dim);
       font-size:13px;
-      font-weight:800;
+      font-weight:900;
       letter-spacing:.2px;
+      white-space:nowrap;
     }
 
     .grid{
@@ -112,13 +114,15 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      color:#8a8a8a;
+      color:#9a9a9a;
       font-size:12px;
+      padding:10px;
+      text-align:center;
     }
-    .thumb img{width:100%; height:100%; object-fit:cover;}
+    .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
     .meta{padding:12px;}
     .tag{
-      color:#9a9a9a;
+      color:#a0a0a0;
       font-size:11px;
       text-transform:uppercase;
       letter-spacing:1px;
@@ -127,12 +131,13 @@
       margin:8px 0 0 0;
       white-space:pre-wrap;
       word-break:break-word;
-      color:#d0d0d0;
+      color:#d6d6d6;
       font-size:12.5px;
       line-height:1.35;
       font-family:ui-monospace,Consolas,monospace;
       max-height:160px;
       overflow:auto;
+      padding-right:6px;
     }
     .mini{
       display:flex;
@@ -146,9 +151,9 @@
       border-radius:10px;
       border:1px solid var(--border);
       background:#000;
-      color:#e0e0e0;
+      color:#eaeaea;
       cursor:pointer;
-      font-weight:900;
+      font-weight:950;
       font-size:12px;
     }
     .mbtn:hover{border-color:var(--accent); color:#fff;}
@@ -159,12 +164,12 @@
       position:fixed;
       left:0; right:0; bottom:0;
       padding:14px 18px;
-      background: rgba(16,16,16,.78);
+      background: rgba(16,16,16,.80);
       border-top: 1px solid rgba(255,255,255,.08);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
-    .dock .wrap{max-width:1200px; margin:0 auto;}
+    .dock .wrap{max-width:1220px; margin:0 auto;}
     .row{
       display:flex;
       flex-wrap:wrap;
@@ -190,12 +195,13 @@
     .tbtn{
       background:transparent;
       border:0;
-      color:#bdbdbd;
+      color:#c8c8c8;
       padding:8px 14px;
       font-weight:950;
       border-radius:8px;
       cursor:pointer;
       font-size:13px;
+      transition:.12s;
     }
     .tbtn:hover{color:#fff;}
     .tbtn.active{background:var(--accent); color:#000;}
@@ -215,9 +221,9 @@
       outline:0;
       color:#fff;
       font-size:14px;
-      min-width:130px;
+      min-width:120px;
     }
-    .field small{color:var(--dim); font-size:12px; font-weight:800;}
+    .field small{color:var(--dim); font-size:12px; font-weight:900;}
 
     .in{
       flex:1;
@@ -251,10 +257,11 @@
       font-weight:950;
       font-size:14px;
       background:#2d2d2d;
-      color:#cfcfcf;
+      color:#d6d6d6;
+      transition:.12s;
     }
     .abtn:hover{background:var(--accent); color:#000;}
-    .abtn.alt{background:#000; border:1px solid var(--border); color:#eee;}
+    .abtn.alt{background:#000; border:1px solid var(--border); color:#f0f0f0;}
     .abtn.alt:hover{border-color:var(--accent); color:#fff;}
     .abtn.danger{
       background:transparent;
@@ -262,6 +269,7 @@
       color:var(--bad);
       display:none;
     }
+    .abtn.danger:hover{background:rgba(255,77,77,.10);}
 
     .slider{
       display:flex;
@@ -292,7 +300,7 @@
       font-family:ui-monospace,Consolas,monospace;
       font-weight:950;
       color:var(--accent);
-      width:40px;
+      width:42px;
       text-align:right;
     }
 
@@ -300,7 +308,7 @@
     .modal{position:fixed; inset:0; background:rgba(0,0,0,.68); display:none; align-items:center; justify-content:center; padding:18px;}
     .box{width:100%; max-width:620px; background:#0f0f0f; border:1px solid #222; border-radius:18px; padding:16px; box-shadow:0 25px 80px rgba(0,0,0,.6);}
     .box h3{margin:0 0 8px 0; font-size:16px;}
-    .box p{margin:0 0 12px 0; color:#9a9a9a; font-size:13px; line-height:1.35;}
+    .box p{margin:0 0 12px 0; color:#a0a0a0; font-size:13px; line-height:1.35;}
     .box .row2{display:flex; gap:10px; flex-wrap:wrap;}
     .box input{flex:1; min-width:260px; background:#000; border:1px solid #333; border-radius:12px; padding:12px 14px; color:#fff; outline:none; font-family:ui-monospace,Consolas,monospace;}
     .save{height:44px; padding:0 16px; border-radius:12px; border:0; background:var(--accent); color:#000; font-weight:950; cursor:pointer;}
@@ -357,6 +365,14 @@
         </div>
 
         <div class="group">
+          <span class="label">Realism</span>
+          <div class="btns" id="realismGroup">
+            <button class="tbtn active" data-realism="on">Ultra ON</button>
+            <button class="tbtn" data-realism="off">OFF</button>
+          </div>
+        </div>
+
+        <div class="group">
           <span class="label">Count</span>
           <div class="slider">
             <span class="mono" id="countVal">50</span>
@@ -384,7 +400,7 @@
           <span class="label">Tile</span>
           <div class="slider">
             <span class="mono" id="tileVal">240</span>
-            <input type="range" id="tileRange" min="140" max="420" value="240"/>
+            <input type="range" id="tileRange" min="140" max="440" value="240"/>
           </div>
         </div>
 
@@ -395,9 +411,9 @@
       </div>
 
       <div class="row" style="margin-top:10px;">
-        <div class="in"><input id="basePrompt" placeholder="Base prompt (например: brutal cyberpunk street portrait, wet asphalt)"/></div>
-        <div class="in"><input id="avoid" placeholder="Avoid: watermark, blurry, extra fingers, bad text..."/></div>
-        <div class="in"><input id="template" placeholder="Template: {subject}, {action}, {place} ... (optional)"/></div>
+        <div class="in"><input id="basePrompt" placeholder="Base prompt (например: luxury street portrait, wet asphalt, candid)"/></div>
+        <div class="in"><input id="avoid" placeholder="Avoid (через запятую): watermark, blurry, extra fingers, bad text..."/></div>
+        <div class="in"><input id="template" placeholder="Template: {subject}, {shot}, {place} ... (optional)"/></div>
       </div>
 
       <div class="actions">
@@ -413,7 +429,7 @@
   <div class="modal" id="modal">
     <div class="box">
       <h3>Gemini API key</h3>
-      <p>Ключ нужен только для генерации изображений (REST использует заголовок <code>x-goog-api-key</code>). [page:1]</p>
+      <p>Ключ нужен только для генерации изображений (REST использует заголовок <code>x-goog-api-key</code>). Качество 1K/2K/4K задаётся через <code>imageConfig.imageSize</code> и <b>K</b> должна быть заглавной. [page:0]</p>
       <div class="row2">
         <input id="apiKeyInput" placeholder="AIza..."/>
         <button class="save" id="saveKey">Save</button>
@@ -422,11 +438,14 @@
   </div>
 
 <script>
-  // ---------- State ----------
+  // =========================
+  // State
+  // =========================
   const state = {
     model: "gemini-3-pro-image-preview",
     aspectRatio: "16:9",
-    imageSize: "1K", // 1K/2K/4K (uppercase K) [page:1]
+    imageSize: "1K",        // 1K/2K/4K (uppercase K) [page:0]
+    realismLock: true,      // Ultra realism lock ON by default
     reference: null,
     abort: null,
     prompts: []
@@ -440,7 +459,9 @@
     return (crypto?.randomUUID ? crypto.randomUUID() : (Date.now() + "-" + Math.random().toString(16).slice(2)));
   }
 
-  // ---------- Toggles ----------
+  // =========================
+  // Toggle wiring
+  // =========================
   function wireToggle(groupId, attr, setter){
     const root = $(groupId);
     root.querySelectorAll("button.tbtn").forEach(btn => {
@@ -454,6 +475,7 @@
   wireToggle("modelGroup","data-model",(v)=>state.model=v);
   wireToggle("ratioGroup","data-ratio",(v)=>state.aspectRatio=v);
   wireToggle("sizeGroup","data-size",(v)=>state.imageSize=v);
+  wireToggle("realismGroup","data-realism",(v)=>state.realismLock = (v === "on"));
 
   // sliders
   $("countRange").addEventListener("input", e => $("countVal").textContent = e.target.value);
@@ -473,7 +495,9 @@
   setCols($("colsRange").value);
   setTile($("tileRange").value);
 
-  // ---------- Progress ----------
+  // =========================
+  // Progress
+  // =========================
   function setProgress(done,total){
     const pct = total ? Math.round(done/total*100) : 0;
     $("bar").style.width = pct + "%";
@@ -481,7 +505,9 @@
   }
   setProgress(0, 1);
 
-  // ---------- API key modal ----------
+  // =========================
+  // API key modal (only for images)
+  // =========================
   function getKey(){ return sessionStorage.getItem("GEMINI_API_KEY") || ""; }
   function requireKeyForImages(){
     if (!getKey()) $("modal").style.display = "flex";
@@ -496,7 +522,9 @@
     $("modal").style.display = "none";
   };
 
-  // ---------- Upload reference ----------
+  // =========================
+  // Upload reference
+  // =========================
   const dropZone = $("dropZone");
   const fileInput = $("fileInput");
   const preview = $("preview");
@@ -526,55 +554,218 @@
     reader.readAsDataURL(file);
   }
 
-  // ---------- Prompt engine ----------
+  // =========================
+  // Ultra realism lock strings
+  // =========================
+  const REALISM_CORE = [
+    "photorealistic DSLR photo",
+    "ultra realistic",
+    "natural skin texture",
+    "visible pores in close-ups",
+    "fine vellus hair (peach fuzz)",
+    "subtle natural imperfections",
+    "realistic color science",
+    "true-to-life lighting",
+    "sharp micro-contrast",
+    "natural depth of field",
+    "authentic high-end Instagram editorial look",
+    "realistic shadows and reflections"
+  ].join(", ");
+
+  const REALISM_NEGATIVE = [
+    "cartoon","anime","illustration","cgi","3d","render",
+    "plastic skin","airbrushed","over-smoothed skin","wax skin",
+    "doll-like","uncanny","painterly",
+    "lowres","blurry","pixelated","overprocessed",
+    "watermark","logo","text","bad typography"
+  ].join(", ");
+
+  // =========================
+  // Prompt DB (шире = меньше похожих сюжетов)
+  // =========================
   const db = {
-    subject: ["female model","male model","androgynous model","street photographer","chef","architect","cyberpunk courier"],
-    action: ["standing confidently","walking dynamically","sitting elegantly","looking over shoulder","laughing candidly","serious editorial pose"],
-    wardrobe: ["oversized blazer","silk slip dress","leather biker jacket","cashmere turtleneck","tailored suit","techwear jacket"],
-    place: ["night city street","minimalist studio","rooftop bar","underground parking","old library","art gallery","rainy alley"],
-    lighting: ["golden hour","blue hour","neon rim light","soft window light","hard flash","cinematic shadows"],
-    camera: ["Sony A7R IV","Leica M11","ARRI Alexa","iPhone 15 Pro"],
+    subject: [
+      "female model", "male model", "androgynous model",
+      "street photographer", "fashion stylist", "creative director",
+      "chef", "architect", "barista", "boxer", "dancer"
+    ],
+    shot: [
+      "extreme close-up portrait", "close-up portrait", "half-body portrait",
+      "full body street shot", "candid lifestyle shot", "editorial lookbook shot"
+    ],
+    action: [
+      "standing confidently", "walking dynamically", "sitting elegantly",
+      "looking over shoulder", "laughing candidly", "serious editorial pose",
+      "adjusting jacket", "fixing hair", "checking phone"
+    ],
+    emotion: ["calm", "confident", "playful", "mysterious", "soft smile", "serious"],
+    wardrobe: [
+      "oversized blazer", "tailored suit", "white linen shirt",
+      "cashmere turtleneck", "leather biker jacket", "minimal black coat",
+      "luxury streetwear jacket", "simple fitted t-shirt"
+    ],
+    palette: [
+      "neutral tones", "monochrome black", "warm earth tones",
+      "navy & gold accents", "soft beige and cream", "desaturated cinematic colors"
+    ],
+    place: [
+      "night city street", "minimalist studio", "rooftop skyline",
+      "underground parking", "old library", "art gallery",
+      "boutique storefront", "subway entrance", "hotel lobby", "industrial loft"
+    ],
+    background: [
+      "busy street bokeh", "minimal concrete wall", "glass reflections",
+      "neon signage bokeh", "soft city lights", "clean architectural lines",
+      "rainy asphalt reflections", "warm indoor lamps"
+    ],
+    time: [
+      "early morning", "midday", "golden hour sunset",
+      "blue hour", "night", "rainy evening", "foggy morning"
+    ],
+    weather: [
+      "clear air", "light rain", "mist in the air",
+      "wet asphalt reflections", "soft haze", "crisp winter air"
+    ],
+    lighting: [
+      "soft window light", "golden hour", "blue hour",
+      "neon rim light", "hard on-camera flash", "cinematic shadows",
+      "overcast diffused light"
+    ],
+    lens: ["35mm", "50mm", "85mm", "24mm wide angle"],
+    aperture: ["f/1.8", "f/2.0", "f/2.8", "f/4"],
+    camera: ["Sony A7R IV", "Leica M11", "Canon R5", "Nikon Z8", "iPhone 15 Pro"],
+    props: [
+      "holding an iced coffee", "holding a phone", "earbuds",
+      "small handbag", "newspaper", "umbrella", "vintage camera",
+      "shopping bag", "sunglasses"
+    ],
+    details: [
+      "clean manicure", "natural eyebrows", "subtle makeup",
+      "natural lip texture", "realistic fabric weave", "fine hair strands",
+      "realistic eye reflections (catchlights)", "authentic street styling"
+    ]
   };
 
+  // Template support (optional)
   function applyTemplate(tpl, v){
     return tpl
       .replaceAll("{subject}", v.subject)
+      .replaceAll("{shot}", v.shot)
       .replaceAll("{action}", v.action)
+      .replaceAll("{emotion}", v.emotion)
       .replaceAll("{wardrobe}", v.wardrobe)
+      .replaceAll("{palette}", v.palette)
       .replaceAll("{place}", v.place)
+      .replaceAll("{background}", v.background)
+      .replaceAll("{time}", v.time)
+      .replaceAll("{weather}", v.weather)
       .replaceAll("{lighting}", v.lighting)
-      .replaceAll("{camera}", v.camera);
+      .replaceAll("{lens}", v.lens)
+      .replaceAll("{aperture}", v.aperture)
+      .replaceAll("{camera}", v.camera)
+      .replaceAll("{prop}", v.prop)
+      .replaceAll("{details}", v.details);
   }
 
-  function buildPrompt(base, avoid, tpl){
-    const v = {
-      subject: rand(db.subject),
-      action: rand(db.action),
-      wardrobe: rand(db.wardrobe),
-      place: rand(db.place),
-      lighting: rand(db.lighting),
-      camera: rand(db.camera),
-    };
+  // Уникальная "сигнатура сюжета" (чтобы не было похожих сцен)
+  function signature(v){
+    return [
+      v.subject, v.shot, v.place, v.time, v.weather,
+      v.lighting, v.wardrobe, v.prop, v.background
+    ].join("|").toLowerCase();
+  }
 
-    const body = (tpl && tpl.includes("{subject}"))
+  function buildPromptFromVars(v, base, avoid, tpl){
+    const baseLine = (base || "").trim() ? base.trim() + ". " : "";
+
+    const scene = (tpl && tpl.includes("{subject}"))
       ? applyTemplate(tpl, v)
-      : `${v.subject}, ${v.action}, wearing ${v.wardrobe}. Location: ${v.place}. Lighting: ${v.lighting}. Camera: ${v.camera}.`;
+      : `${v.subject}, ${v.shot}, ${v.action}, emotion: ${v.emotion}. ` +
+        `Wearing: ${v.wardrobe} (palette: ${v.palette}). ` +
+        `Location: ${v.place}; background: ${v.background}. ` +
+        `Time: ${v.time}; atmosphere: ${v.weather}. ` +
+        `Lighting: ${v.lighting}. ` +
+        `Lens: ${v.lens}, aperture: ${v.aperture}. ` +
+        `Camera: ${v.camera}. ` +
+        `Prop: ${v.prop}. ` +
+        `Details: ${v.details}.`;
 
-    const refLine = state.reference ? "Use the attached reference image; keep the same identity and key visual features." : "";
-    const avoidLine = (avoid || "").trim() ? `Avoid: ${avoid.trim()}.` : "";
+    const refLine = state.reference
+      ? "Use the attached reference image; keep the same identity and key facial features. Keep skin texture natural; do not beautify or smooth skin."
+      : "";
+
     const uniq = `Unique tag: ${uuid()}.`;
 
-    return `${(base||"").trim() ? base.trim() + ". " : ""}${body} ${refLine} ${avoidLine} ${uniq}`.replace(/\s+/g," ").trim();
+    if (state.realismLock){
+      const userAvoid = (avoid || "").trim();
+      const avoidLine = `Avoid: ${REALISM_NEGATIVE}${userAvoid ? ", " + userAvoid : ""}.`;
+      return `${baseLine}${scene} ${REALISM_CORE}. ${refLine} ${avoidLine} ${uniq}`.replace(/\s+/g," ").trim();
+    } else {
+      const avoidLine = (avoid || "").trim() ? `Avoid: ${avoid.trim()}.` : "";
+      return `${baseLine}${scene} ${refLine} ${avoidLine} ${uniq}`.replace(/\s+/g," ").trim();
+    }
   }
 
-  // ---------- Render cards ----------
+  // Генерация промтов с анти-повторами (и "окном" недавних мест)
+  function generateUniquePrompts(count, base, avoid, tpl){
+    const used = new Set();
+    const prompts = [];
+    const recentPlaces = [];
+    const recentWindow = Math.min(12, Math.max(6, Math.floor(count / 6)));
+
+    for (let i = 0; i < count; i++){
+      let tries = 0;
+      let v, sig;
+
+      while (true){
+        v = {
+          subject: rand(db.subject),
+          shot: rand(db.shot),
+          action: rand(db.action),
+          emotion: rand(db.emotion),
+          wardrobe: rand(db.wardrobe),
+          palette: rand(db.palette),
+          place: rand(db.place),
+          background: rand(db.background),
+          time: rand(db.time),
+          weather: rand(db.weather),
+          lighting: rand(db.lighting),
+          lens: rand(db.lens),
+          aperture: rand(db.aperture),
+          camera: rand(db.camera),
+          prop: rand(db.props),
+          details: rand(db.details)
+        };
+
+        sig = signature(v);
+        const placeTooSoon = recentPlaces.includes(v.place);
+
+        tries++;
+        const ok = !used.has(sig) && !placeTooSoon;
+        if (ok || tries > 60) break;
+      }
+
+      used.add(sig);
+
+      recentPlaces.push(v.place);
+      while (recentPlaces.length > recentWindow) recentPlaces.shift();
+
+      prompts.push(buildPromptFromVars(v, base, avoid, tpl));
+    }
+
+    return prompts;
+  }
+
+  // =========================
+  // Render cards
+  // =========================
   function makeCard(i, prompt){
     const el = document.createElement("div");
     el.className = "card";
     el.innerHTML = `
       <div class="thumb" id="thumb_${i}">Prompt ready</div>
       <div class="meta">
-        <div class="tag">#${i+1} · ${state.model} · ${state.aspectRatio} · ${state.imageSize}</div>
+        <div class="tag">#${i+1} · ${state.model} · ${state.aspectRatio} · ${state.imageSize} · realism:${state.realismLock ? "ON" : "off"}</div>
         <pre id="p_${i}"></pre>
       </div>
       <div class="mini">
@@ -605,7 +796,9 @@
     };
   }
 
-  // ---------- Gemini REST (direct) ----------
+  // =========================
+  // Gemini REST (direct)
+  // =========================
   function pickFinalImagePart(j){
     const parts = j?.candidates?.[0]?.content?.parts || [];
     for (let k = parts.length - 1; k >= 0; k--){
@@ -628,19 +821,21 @@
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(state.model)}:generateContent`;
 
     const parts = [{ text: prompt }];
-    if (state.reference) parts.push({ inline_data: { mime_type: state.reference.mimeType, data: state.reference.base64 } });
+    if (state.reference) {
+      parts.push({ inline_data: { mime_type: state.reference.mimeType, data: state.reference.base64 } });
+    }
 
     const payload = {
       contents: [{ role: "user", parts }],
       generationConfig: {
         responseModalities: ["TEXT","IMAGE"],
-        imageConfig: { aspectRatio: state.aspectRatio, imageSize: state.imageSize } // 1K/2K/4K [page:1]
+        imageConfig: { aspectRatio: state.aspectRatio, imageSize: state.imageSize } // 1K/2K/4K [page:0]
       }
     };
 
     const r = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type":"application/json", "x-goog-api-key": apiKey }, // [page:1]
+      headers: { "Content-Type":"application/json", "x-goog-api-key": apiKey }, // [page:0]
       body: JSON.stringify(payload),
       signal
     });
@@ -652,19 +847,22 @@
       e.status = r.status;
       throw e;
     }
+
     const img = pickFinalImagePart(j);
     if (!img) throw new Error("No image in response");
     return img;
   }
 
-  // ---------- Batch runners ----------
+  // =========================
+  // Batch runners
+  // =========================
   async function runPromptsOnly(){
     const count = Number($("countRange").value);
     const base  = $("basePrompt").value;
     const avoid = $("avoid").value;
     const tpl   = $("template").value;
 
-    state.prompts = Array.from({length: count}, () => buildPrompt(base, avoid, tpl));
+    state.prompts = generateUniquePrompts(count, base, avoid, tpl);
     window.__PROMPTS_TXT = state.prompts.join("\n\n");
 
     const grid = $("grid");
@@ -685,7 +883,7 @@
     const avoid = $("avoid").value;
     const tpl   = $("template").value;
 
-    state.prompts = Array.from({length: count}, () => buildPrompt(base, avoid, tpl));
+    state.prompts = generateUniquePrompts(count, base, avoid, tpl);
     window.__PROMPTS_TXT = state.prompts.join("\n\n");
 
     const grid = $("grid");
@@ -709,6 +907,7 @@
         const thumb = $(`thumb_${i}`);
         try{
           thumb.textContent = "Generating…";
+
           let attempt = 0;
           while (true) {
             try{
@@ -719,7 +918,7 @@
               attempt++;
               const status = e.status || 0;
               if ((status === 429 || status === 503) && attempt <= 6) {
-                const backoff = Math.min(8000, 500 * Math.pow(2, attempt));
+                const backoff = Math.min(9000, 600 * Math.pow(2, attempt));
                 thumb.textContent = `Rate limit… retry in ${Math.round(backoff/1000)}s`;
                 await sleep(backoff);
                 continue;
@@ -727,6 +926,7 @@
               throw e;
             }
           }
+
         } catch(e){
           thumb.textContent = "Error: " + String(e.message || e);
           thumb.style.color = "var(--bad)";
