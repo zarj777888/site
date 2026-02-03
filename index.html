@@ -3,201 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Deep-Data Generator</title>
+    <title>Pro Dataset Generator</title>
     <style>
         :root {
-            --bg-color: #050505;
-            --surface-color: #121212;
-            --input-bg: #1e1e1e;
-            --accent-color: #00ff9d; /* Cyberpunk Green */
+            --bg-color: #080808; /* Глубокий черный */
+            --panel-bg: #141414; /* Темно-серый для панелей */
+            --input-bg: #222222;
+            --accent-color: #ccff00; /* Тот самый неоново-желтый */
             --text-main: #ffffff;
             --text-dim: #666666;
-            --border: #333;
+            --border: #333333;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: flex-start;
             min-height: 100vh;
             margin: 0;
-            padding: 40px 20px;
+            padding: 20px;
         }
 
-        .container {
+        /* --- Зона загрузки изображения --- */
+        .upload-zone {
             width: 100%;
-            max-width: 1000px;
-        }
-
-        /* Header */
-        .header {
-            margin-bottom: 40px;
-            text-align: center;
-        }
-        .header h1 {
-            font-weight: 800;
-            letter-spacing: -1px;
-            margin: 0;
-            background: linear-gradient(90deg, #fff, #888);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .header p {
-            color: var(--text-dim);
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        /* Controls */
-        .control-panel {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border);
+            max-width: 900px;
+            height: 250px;
+            border: 2px dashed var(--border);
             border-radius: 16px;
-            padding: 25px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .control-group {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: 0.3s;
+            background-color: rgba(255,255,255,0.02);
+            position: relative;
+            overflow: hidden;
         }
 
-        .label {
+        .upload-zone:hover {
+            border-color: var(--accent-color);
+            background-color: rgba(204, 255, 0, 0.05);
+        }
+
+        .upload-zone p {
+            color: var(--text-dim);
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .upload-icon {
+            font-size: 40px;
+            color: var(--text-dim);
+        }
+
+        /* Превью загруженного фото */
+        #imagePreview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: #000;
+            display: none; /* Скрыто по умолчанию */
+        }
+        
+        #fileInput {
+            display: none;
+        }
+
+        /* --- Нижняя панель управления (как на скрине) --- */
+        .control-bar {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 15px 25px;
+            width: 100%;
+            max-width: 900px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        /* Верхний ряд контролов (Ratio, Size, Count) */
+        .controls-top {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+
+        .group-label {
             font-size: 12px;
             font-weight: 700;
             color: var(--text-dim);
             text-transform: uppercase;
             letter-spacing: 1px;
+            margin-right: 15px;
         }
 
-        /* Pill Inputs */
-        .pill-select {
+        .btn-group {
             display: flex;
-            background: var(--bg-color);
-            border: 1px solid var(--border);
+            background-color: #000;
             border-radius: 8px;
             padding: 4px;
-        }
-        .pill-select label {
-            flex: 1;
-            text-align: center;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            transition: 0.2s;
-            color: #888;
-        }
-        .pill-select input { display: none; }
-        .pill-select input:checked + label {
-            background-color: var(--input-bg);
-            color: var(--accent-color);
-            box-shadow: 0 0 15px rgba(0, 255, 157, 0.1);
+            border: 1px solid var(--border);
         }
 
-        /* Range Slider */
-        .slider-wrapper {
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-btn:hover {
+            color: #fff;
+        }
+
+        /* Активное состояние кнопки (Желтая) */
+        .toggle-btn.active {
+            background-color: var(--accent-color);
+            color: #000;
+            font-weight: 800;
+        }
+
+        /* Слайдер количества */
+        .slider-group {
             display: flex;
             align-items: center;
-            gap: 15px;
-            background: var(--bg-color);
+            background-color: #000;
+            padding: 5px 15px;
+            border-radius: 12px;
             border: 1px solid var(--border);
-            padding: 10px 15px;
-            border-radius: 8px;
         }
+
         input[type=range] {
-            width: 100%;
-            accent-color: var(--accent-color);
-            cursor: pointer;
+            -webkit-appearance: none;
+            width: 100px;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            outline: none;
+            margin: 0 10px;
         }
-        .count-val {
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(204,255,0,0.5);
+        }
+
+        #countVal {
             color: var(--accent-color);
             font-weight: bold;
             font-family: monospace;
-            font-size: 16px;
+            width: 20px;
+            text-align: center;
         }
 
-        /* Main Input */
-        .main-input {
-            width: 100%;
-            background-color: var(--surface-color);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 5px;
+        /* Нижний ряд (Поле ввода и Кнопка) */
+        .controls-bottom {
             display: flex;
-            margin-bottom: 20px;
-        }
-        .main-input input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            padding: 20px;
-            color: white;
-            font-size: 16px;
-            outline: none;
-        }
-        .generate-btn {
-            background-color: var(--accent-color);
-            color: #000;
-            border: none;
-            padding: 0 40px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 16px;
-            cursor: pointer;
-            transition: 0.2s;
-            text-transform: uppercase;
-        }
-        .generate-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 20px rgba(0, 255, 157, 0.4);
-        }
-
-        /* Output Area */
-        .output-list {
-            display: grid;
             gap: 15px;
         }
-        .prompt-card {
-            background-color: var(--surface-color);
-            border-left: 3px solid var(--border);
-            padding: 20px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            color: #ccc;
-            position: relative;
-            transition: 0.2s;
+
+        .text-input-wrapper {
+            flex-grow: 1;
+            background-color: var(--input-bg);
+            border-radius: 12px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            border: 1px solid transparent;
+            transition: 0.3s;
         }
-        .prompt-card:hover {
-            border-left-color: var(--accent-color);
-            background-color: #1a1a1a;
-        }
-        .tag {
-            color: var(--accent-color);
-            opacity: 0.7;
-        }
-        .meta {
-            color: #555;
-            font-size: 11px;
-            margin-bottom: 5px;
-            display: block;
+        
+        .text-input-wrapper:focus-within {
+            border-color: #444;
         }
 
-        .action-bar {
+        .icon {
+            color: #555;
+            font-size: 20px;
+            margin-right: 15px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 18px 0;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .generate-btn {
+            background-color: #333;
+            color: #888;
+            border: none;
+            padding: 0 35px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .generate-btn:hover {
+            background-color: var(--accent-color);
+            color: #000;
+            box-shadow: 0 0 20px rgba(204,255,0,0.2);
+        }
+
+        /* Блок вывода */
+        .output-area {
+            width: 100%;
+            max-width: 900px;
+            margin-top: 30px;
+            display: none; /* Скрыт пока нет генерации */
+        }
+
+        .output-header {
             display: flex;
             justify-content: flex-end;
             margin-bottom: 10px;
         }
-        .copy-all {
+
+        .copy-btn {
             background: transparent;
             color: var(--accent-color);
             border: 1px solid var(--accent-color);
@@ -205,186 +255,226 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 12px;
-            font-weight: 600;
+            font-weight: bold;
+            text-transform: uppercase;
         }
-        .copy-all:hover {
-            background: rgba(0, 255, 157, 0.1);
+
+        .prompt-card {
+            background-color: #111;
+            border-left: 3px solid #333;
+            padding: 20px;
+            margin-bottom: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #ccc;
+        }
+        
+        .prompt-card:hover {
+            border-left-color: var(--accent-color);
+            background-color: #161616;
+        }
+
+        .tag-info {
+            color: #555;
+            font-size: 11px;
+            margin-bottom: 8px;
+            display: block;
+            text-transform: uppercase;
         }
 
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>DEEP DATASET GENERATOR</h1>
-        <p>Генерация на основе глубокого анализа изображения (JSON Structure Simulation)</p>
+    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <span class="upload-icon">📷</span>
+        <p>Нажми или перетащи сюда фото (Референс)</p>
+        <img id="imagePreview" alt="Preview">
+        <input type="file" id="fileInput" accept="image/*">
     </div>
 
-    <div class="control-panel">
-        <div class="control-group">
-            <span class="label">Aspect Ratio</span>
-            <div class="pill-select">
-                <label><input type="radio" name="ar" value="--ar 3:4" checked>3:4</label>
-                <label><input type="radio" name="ar" value="--ar 9:16">9:16</label>
-                <label><input type="radio" name="ar" value="--ar 16:9">16:9</label>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <span class="label">Complexity Level</span>
-            <div class="pill-select">
-                <label><input type="radio" name="level" value="normal">Mid</label>
-                <label><input type="radio" name="level" value="max" checked>Max</label>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <span class="label">Batch Size</span>
-            <div class="slider-wrapper">
-                <span class="count-val" id="countVal">10</span>
-                <input type="range" id="batchCount" min="1" max="50" value="10" oninput="document.getElementById('countVal').innerText = this.value">
-            </div>
-        </div>
-    </div>
-
-    <div class="main-input">
-        <input type="text" id="refLink" placeholder="Вставьте ссылку на референс (Image URL)...">
-        <button class="generate-btn" onclick="generateBatch()">Generate</button>
-    </div>
-
-    <div class="action-bar">
-        <button class="copy-all" onclick="copyAll()">Copy All Prompts</button>
-    </div>
-
-    <div class="output-list" id="output">
-        </div>
-</div>
-
-<script>
-    // ==========================================
-    // ГЛУБОКАЯ БАЗА ДАННЫХ (Симуляция JSON)
-    // ==========================================
-    
-    const db = {
-        composition: {
-            framing: ["medium-full body portrait", "waist-up portrait", "close-up portrait", "low-angle full body shot", "wide environmental shot", "dutch angle dynamic shot"],
-            dof: ["shallow depth of field", "deep depth of field", "bokeh background", "sharp focus on eyes"],
-            angle: ["eye-level camera", "slightly low angle", "high angle view", "profile view"]
-        },
-        subject: {
-            pose: ["standing one hand on hip", "walking towards camera", "sitting with crossed legs", "leaning against wall", "looking over shoulder", "dynamic walking pose"],
-            expression: ["soft smile", "confident gaze", "neutral editorial expression", "laughing candidly", "mysterious look", "piercing gaze"],
-            makeup: ["natural glam makeup", "no-makeup look", "bold red lip and eyeliner", "dewy skin finish", "smokey eyes evening look"]
-        },
-        clothing: {
-            types: ["evening dress", "oversized blazer", "leather trench coat", "silk slip dress", "cashmere sweater", "structured corset top"],
-            fabrics: ["smooth satin", "wrinkled linen", "heavy wool blend", "translucent chiffon", "reflective latex", "distressed denim"],
-            colors: ["deep navy blue", "charcoal gray", "pure white", "emerald green", "muted beige", "burgundy red"],
-            details: ["deep V-neck", "wrap-style bodice", "visible stitching", "frayed edges", "gold button details"]
-        },
-        environment: {
-            places: ["urban city street at night", "luxury hotel lobby", "abandoned industrial loft", "sunlit minimalist apartment", "foggy nature landscape", "neon-lit subway station"],
-            elements: ["storefronts with illuminated signage", "blurred pedestrians in distance", "architectural glass elements", "rain-slicked pavement", "antique furniture background"]
-        },
-        lighting: {
-            types: ["cinematic urban night lighting", "soft window light", "golden hour sun rays", "studio rembrandt lighting", "harsh direct flash", "neon sign ambient glow"],
-            quality: ["soft frontal light", "rim light separating subject", "dramatic hard shadows", "even fill light", "volumetric light beams"]
-        },
-        technical: {
-            camera: ["Shot on Sony A7R IV", "Shot on Leica M11", "Shot on Canon EOS R5", "Shot on Fujifilm GFX 100"],
-            lens: ["35mm f/1.4 lens", "50mm f/1.2 prime lens", "85mm portrait lens", "24mm wide angle"],
-            film: ["Kodak Portra 400 aesthetic", "Fujifilm Superia 800 grain", "Cinestill 800T halation", "Digital raw format"],
-            details: ["ISO 800", "shutter speed 1/125", "chromatic aberration", "sharp focus", "high resolution"]
-        },
-        color_grading: {
-            palette: ["teal and orange grading", "warm beige tones", "cool blue atmosphere", "black and white high contrast", "muted pastel tones", "vivid saturated colors"]
-        }
-    };
-
-    const realismBoilerplate = "highly detailed skin texture, visible pores, micro-imperfections, natural skin grain, realistic subsurface scattering, moist eyes, authentic texture";
-    const negativePrompt = "--no plastic, smooth skin, cartoon, anime, 3d render, illustration, drawing, painting, bad anatomy, deformed";
-
-    // Утилита для случайного выбора
-    function getR(arr) {
-        return arr[Math.floor(Math.random() * arr.length)];
-    }
-
-    function generateBatch() {
-        const ref = document.getElementById('refLink').value.trim();
-        const count = document.getElementById('batchCount').value;
-        const ar = document.querySelector('input[name="ar"]:checked').value;
-        const outputDiv = document.getElementById('output');
+    <div class="control-bar">
         
-        if (!ref) {
-            alert("Пожалуйста, вставьте ссылку на референс!");
-            return;
+        <div class="controls-top">
+            
+            <div style="display: flex; align-items: center;">
+                <span class="group-label">RATIO</span>
+                <div class="btn-group" id="ratioGroup">
+                    <button class="toggle-btn" onclick="selectOption(this, 'ratio', '--ar 1:1')">1:1</button>
+                    <button class="toggle-btn" onclick="selectOption(this, 'ratio', '--ar 3:4')">3:4</button>
+                    <button class="toggle-btn" onclick="selectOption(this, 'ratio', '--ar 4:3')">4:3</button>
+                    <button class="toggle-btn active" onclick="selectOption(this, 'ratio', '--ar 16:9')">16:9</button>
+                    <button class="toggle-btn" onclick="selectOption(this, 'ratio', '--ar 9:16')">9:16</button>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center;">
+                <span class="group-label">COMPLEXITY</span>
+                <div class="btn-group" id="complexityGroup">
+                    <button class="toggle-btn" onclick="selectOption(this, 'complexity', 'mid')">Mid</button>
+                    <button class="toggle-btn active" onclick="selectOption(this, 'complexity', 'max')">Max</button>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center;">
+                <span class="group-label">COUNT</span>
+                <div class="slider-group">
+                    <span id="countVal">10</span>
+                    <input type="range" id="countRange" min="1" max="20" value="10" oninput="document.getElementById('countVal').innerText = this.value">
+                </div>
+            </div>
+
+        </div>
+
+        <div class="controls-bottom">
+            <div class="text-input-wrapper">
+                <span class="icon">✨</span>
+                <input type="text" id="extraContext" placeholder="Дополнительные детали (необязательно)...">
+            </div>
+            <button class="generate-btn" onclick="generateBatch()">Generate</button>
+        </div>
+    </div>
+
+    <div class="output-area" id="outputArea">
+        <div class="output-header">
+            <button class="copy-btn" onclick="copyAll()">Copy All</button>
+        </div>
+        <div id="promptsList"></div>
+    </div>
+
+    <script>
+        // --- Логика Интерфейса ---
+        
+        let currentSettings = {
+            ratio: '--ar 16:9',
+            complexity: 'max',
+            hasImage: false
+        };
+
+        // Обработка загрузки фото (Превью)
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('imagePreview');
+        const dropZone = document.getElementById('dropZone');
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    dropZone.querySelector('p').style.display = 'none';
+                    dropZone.querySelector('.upload-icon').style.display = 'none';
+                    currentSettings.hasImage = true;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Функция переключения кнопок
+        function selectOption(element, group, value) {
+            // Убираем active у всех кнопок в этой группе
+            const buttons = element.parentElement.querySelectorAll('.toggle-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Добавляем active нажатой
+            element.classList.add('active');
+            
+            // Сохраняем значение
+            currentSettings[group] = value;
         }
 
-        outputDiv.innerHTML = '';
-        let allText = "";
+        // --- Логика Генерации ---
 
-        for (let i = 0; i < count; i++) {
-            // Генерация параметров
-            const comp = db.composition;
-            const subj = db.subject;
-            const cloth = db.clothing;
-            const env = db.environment;
-            const light = db.lighting;
-            const tech = db.technical;
+        const db = {
+            subjects: [
+                "standing confidently", "sitting elegantly", "walking dynamically", 
+                "leaning against a wall", "looking over shoulder", "fixing hair",
+                "drinking coffee", "laughing candidly", "serious editorial pose"
+            ],
+            clothes: [
+                "silk slip dress", "oversized blazer", "leather biker jacket", 
+                "vintage denim jacket", "cashmere turtleneck", "evening gown",
+                "white linen shirt", "sporty chic top", "textured wool coat"
+            ],
+            colors: ["navy blue", "charcoal grey", "pure white", "emerald green", "beige", "black", "red"],
+            places: [
+                "luxury penthouse", "night city street", "underground parking", 
+                "minimalist studio", "rooftop bar", "subway station", 
+                "foggy forest", "desert dunes", "old library", "art gallery"
+            ],
+            lighting: [
+                "golden hour", "blue hour", "neon lights", "soft window light", 
+                "harsh flash", "studio lighting", "cinematic shadows"
+            ],
+            tech: [
+                "Shot on Sony A7R IV", "Shot on Leica M11", "Shot on iPhone 15 Pro", 
+                "Kodak Portra 400", "Fujifilm simulation", "35mm film grain"
+            ]
+        };
 
-            // Сборка сложного промпта (эмуляция структуры JSON)
-            // Структура: [Ref] [Composition] [Subject+Clothing] [Environment] [Lighting] [Tech] [Style]
-            
-            const promptParts = [
-                ref,
-                `${getR(comp.framing)}, ${getR(comp.angle)}, ${getR(comp.dof)}`,
-                `Subject is a female, ${getR(subj.pose)}, ${getR(subj.expression)}, wearing a ${getR(cloth.colors)} ${getR(cloth.fabrics)} ${getR(cloth.types)} with ${getR(cloth.details)}. Makeup style is ${getR(subj.makeup)}`,
-                `Environment is ${getR(env.places)}, background elements include ${getR(env.elements)}`,
-                `Lighting is ${getR(light.types)}, featuring ${getR(light.quality)}`,
-                `Technical attributes: ${getR(tech.camera)}, ${getR(tech.lens)}, ${getR(tech.film)}, ${getR(tech.details)}`,
-                `Color palette: ${getR(db.color_grading.palette)}`,
-                realismBoilerplate,
-                ar + " --v 6.0 --style raw --s 250"
-            ];
+        const realismTag = "highly detailed skin texture, visible pores, natural imperfections, raw photo style, 8k resolution";
 
-            const fullPrompt = promptParts.join(", ");
-            const fullPromptClean = fullPrompt + " " + negativePrompt;
-
-            // Визуализация
-            const card = document.createElement('div');
-            card.className = 'prompt-card';
-            
-            // Красивое отображение "параметров"
-            card.innerHTML = `
-                <span class="meta">#${i + 1} | ${getR(tech.camera)} | ${getR(cloth.types)} | ${getR(env.places)}</span>
-                ${fullPromptClean}
-            `;
-            
-            outputDiv.appendChild(card);
-            allText += fullPromptClean + "\n\n";
+        function getR(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
         }
 
-        window.generatedBatchText = allText;
-    }
+        function generateBatch() {
+            if (!currentSettings.hasImage) {
+                alert("Сначала загрузи изображение-референс!");
+                return;
+            }
 
-    function copyAll() {
-        if (window.generatedBatchText) {
-            navigator.clipboard.writeText(window.generatedBatchText);
-            const btn = document.querySelector('.copy-all');
-            btn.innerText = "COPIED!";
-            btn.style.background = "#00ff9d";
-            btn.style.color = "#000";
-            setTimeout(() => {
-                btn.innerText = "Copy All Prompts";
-                btn.style.background = "transparent";
-                btn.style.color = "#00ff9d";
-            }, 1500);
-        } else {
-            alert("Сначала сгенерируйте промпты!");
+            const count = document.getElementById('countRange').value;
+            const extra = document.getElementById('extraContext').value;
+            const outputArea = document.getElementById('outputArea');
+            const list = document.getElementById('promptsList');
+            
+            list.innerHTML = "";
+            outputArea.style.display = "block";
+            
+            let allText = "";
+
+            for(let i=0; i<count; i++) {
+                // Строим промпт
+                let prompt = `[Attached Reference Image] `; // Тег для референса
+                
+                if (extra) prompt += `${extra}, `;
+
+                // Генерируем уникальные детали
+                prompt += `female subject, ${getR(db.subjects)}, wearing ${getR(db.colors)} ${getR(db.clothes)}. `;
+                prompt += `Located in ${getR(db.places)}. `;
+                prompt += `Lighting: ${getR(db.lighting)}. `;
+                prompt += `Technical: ${getR(db.tech)}. `;
+                prompt += `${realismTag} `;
+                prompt += `${currentSettings.ratio} --v 6.0 --style raw --s 250`;
+
+                // Визуализация
+                const div = document.createElement('div');
+                div.className = 'prompt-card';
+                div.innerHTML = `
+                    <span class="tag-info">#${i+1} | ${currentSettings.ratio.replace('--ar ', '')} | ${getR(db.places).split(' ').slice(0,2).join(' ')}</span>
+                    ${prompt}
+                `;
+                list.appendChild(div);
+
+                allText += prompt + "\n\n";
+            }
+            
+            window.generatedBatchText = allText;
         }
-    }
-</script>
 
+        function copyAll() {
+            if(window.generatedBatchText) {
+                navigator.clipboard.writeText(window.generatedBatchText);
+                const btn = document.querySelector('.copy-btn');
+                const oldText = btn.innerText;
+                btn.innerText = "COPIED!";
+                setTimeout(() => btn.innerText = oldText, 2000);
+            }
+        }
+
+    </script>
 </body>
 </html>
