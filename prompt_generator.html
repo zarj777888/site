@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aura Snapshot Builder: Генератор Реалистичных Промптов</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        .category {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .category h3 {
+            color: #34495e;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+        .category h3::before {
+            content: '🔗'; /* Иконка */
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .options label {
+            background-color: #e9eff5;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+            border: 1px solid transparent;
+            font-size: 0.9em;
+            color: #555;
+            display: flex;
+            align-items: center;
+        }
+        .options input[type="radio"] {
+            margin-right: 8px;
+            accent-color: #3498db; /* Цвет для радиокнопок */
+        }
+        .options input[type="checkbox"] {
+            margin-right: 8px;
+            accent-color: #2ecc71; /* Цвет для чекбоксов */
+        }
+        .options input[type="radio"]:checked + span,
+        .options input[type="checkbox"]:checked + span {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .options label:hover {
+            background-color: #dbe4ee;
+            border-color: #a7c0d8;
+        }
+        .options input[type="radio"]:checked ~ span,
+        .options input[type="checkbox"]:checked ~ span {
+            background-color: #3498db;
+            color: #fff;
+            border-color: #3498db;
+        }
+
+        /* Стиль для активных лейблов */
+        .options input[type="radio"]:checked + span,
+        .options input[type="checkbox"]:checked + span {
+            background-color: #3498db; /* Цвет фона при выборе */
+            color: #fff; /* Цвет текста при выборе */
+            border-color: #3498db;
+        }
+        .options input[type="radio"]:checked + span::before,
+        .options input[type="checkbox"]:checked + span::before {
+            content: '✓ '; /* Галочка перед текстом */
+        }
+        .options label span {
+            display: inline-block;
+            background-color: #e9eff5;
+            padding: 6px 12px;
+            border-radius: 18px;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+            border: 1px solid #e9eff5;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+        }
+        .input-group input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        .input-group input[type="text"]:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            justify-content: center;
+        }
+        button {
+            padding: 15px 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+        #generateBtn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        #generateBtn:hover {
+            background-color: #27ae60;
+        }
+        #randomizeBtn {
+            background-color: #f39c12;
+            color: white;
+        }
+        #randomizeBtn:hover {
+            background-color: #e67e22;
+        }
+        #copyBtn {
+            background-color: #3498db;
+            color: white;
+        }
+        #copyBtn:hover {
+            background-color: #2980b9;
+        }
+
+        #promptOutput {
+            background-color: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 100px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1em;
+            color: #2c3e50;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-top: 30px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Aura Snapshot Builder: Генератор Реалистичных Промптов</h1>
+
+        <div class="input-group">
+            <label for="referenceImage">Ссылка на референсное изображение девушки (обязательно для сохранения образа):</label>
+            <input type="text" id="referenceImage" placeholder="Вставьте URL изображения, например, https://example.com/girl.jpg">
+        </div>
+
+        <div class="category">
+            <h3>Стиль (Aesthetic)</h3>
+            <div class="options" id="styleOptions">
+                <label><input type="radio" name="style" value="Casual Lifestyle"><span>Casual Lifestyle</span></label>
+                <label><input type="radio" name="style" value="Raw Minimalism"><span>Raw Minimalism</span></label>
+                <label><input type="radio" name="style" value="Scandi-Style"><span>Scandi-Style</span></label>
+                <label><input type="radio" name="style" value="Parisienne"><span>Parisienne</span></label>
+                <label><input type="radio" name="style" value="High-End Street Photography"><span>High-End Street Photography</span></label>
+                <label><input type="radio" name="style" value="Quiet Luxury"><span>Quiet Luxury</span></label>
+                <label><input type="radio" name="style" value="Editorial Fashion"><span>Editorial Fashion</span></label>
+                <label><input type="radio" name="style" value="Dark Academia"><span>Dark Academia</span></label>
+                <label><input type="radio" name="style" value="Boho-Chic"><span>Boho-Chic</span></label>
+                <label><input type="radio" name="style" value="Vintage 70s"><span>Vintage 70s</span></label>
+                <label><input type="radio" name="style" value="Preppy"><span>Preppy</span></label>
+            </div>
+        </div>
+
+        <div class="category">
+            <h3>Локация</h3>
+            <div class="options" id="locationOptions">
+                <label><input type="radio" name="location" value="Luxury penthouse"><span>Luxury penthouse</span></label>
+                <label><input type="radio" name="location" value="Underground parking"><span>Underground parking</span></label>
+                <label><input type="radio" name="location" value="Night gas station"><span>Night gas station</span></label>
+                <label><input type="radio" name="location" value="Glass elevator"><span>Glass elevator</span></label>
+                <label><input type="radio" name="location" value="Subway car"><span>Subway car</span></label>
+                <label><input type="radio" name="location" value="NYC rooftop"><span>NYC rooftop</span></label>
+                <label><input type="radio" name="location" value="Foggy pine forest"><span>Foggy pine forest</span></label>
+                <label><input type="radio" name="location" value="Black sand beach"><span>Black sand beach</span></label>
+                <label><input type="radio" name="location" value="Lavender field"><span>Lavender field</span></label>
+                <label><input type="radio" name="location" value="Desert dunes"><span>Desert dunes</span></label>
+                <label><input type="radio" name="location" value="Waterfall mist"><span>Waterfall mist</span></label>
+                <label><input type="radio" name="location" value="Tropical greenhouse"><span>Tropical greenhouse</span></label>
+                <label><input type="radio" name="location" value="Minimalist cafe"><span>Minimalist cafe</span></label>
+                <label><input type="radio" name="location" value="Art gallery"><span>Art gallery</span></label>
+                <label><input type="radio" name="location" value="Old library"><span>Old library</span></label>
+                <label><input type="radio" name="location" value="Tennis court"><span>Tennis court</span></label>
+                <label><input type="radio" name="location" value="Infinity pool"><span>Infinity pool</span></label>
+                <label><input type="radio" name="location" value="Designer hotel lobby"><span>Designer hotel lobby</span></label>
+            </div>
+        </div>
+
+        <div class="category">
+            <h3>Одежда и Ткани</h3>
+            <div class="options" id="clothingOptions">
+                <label><input type="radio" name="clothing" value="Wrinkled linen dress"><span>Wrinkled linen dress</span></label>
+                <label><input type="radio" name="clothing" value="Ribbed knitwear sweater"><span>Ribbed knitwear sweater</span></label>
+                <label><input type="radio" name="clothing" value="Reflective silk slip dress"><span>Reflective silk slip dress</span></label>
+                <label><input type="radio" name="clothing" value="Rough leather trench coat"><span>Rough leather trench coat</span></label>
+                <label><input type="radio" name="clothing" value="Heavy denim jacket"><span>Heavy denim jacket</span></label>
+                <label><input type="radio" name="clothing" value="Translucent chiffon blouse"><span>Translucent chiffon blouse</span></label>
+                <label><input type="radio" name="clothing" value="Oversized blazer"><span>Oversized blazer</span></label>
+                <label><input type="radio" name="clothing" value="Cashmere turtleneck"><span>Cashmere turtleneck</span></label>
+                <label><input type="radio" name="clothing" value="Crop top with high-waisted jeans"><span>Crop top with high-waisted jeans</span></label>
+                <label><input type="radio" name="clothing" value="High-waisted wool trousers"><span>High-waisted wool trousers</span></label>
+            </div>
+        </div>
+
+        <div class="category">
+            <h3>Освещение и Атмосфера</h3>
+            <div class="options" id="lightingOptions">
+                <label><input type="radio" name="lighting" value="Golden hour light"><span>Golden hour light</span></label>
+                <label><input type="radio" name="lighting" value="Blue hour glow"><span>Blue hour glow</span></label>
+                <label><input type="radio" name="lighting" value="Soft window light"><span>Soft window light</span></label>
+                <label><input type="radio" name="lighting" value="Harsh direct sunlight with sharp shadows"><span>Harsh direct sunlight with sharp shadows</span></label>
+                <label><input type="radio" name="lighting" value="Neon flickering reflections"><span>Neon flickering reflections</span></label>
+                <label><input type="radio" name="lighting" value="Moonlight with deep shadows"><span>Moonlight with deep shadows</span></label>
+                <label><input type="radio" name="lighting" value="Dust motes in sunbeams"><span>Dust motes in sunbeams</span></label>
+                <label><input type="radio" name="lighting" value="Lens flare from streetlights"><span>Lens flare from streetlights</span></label>
+                <label><input type="radio" name="lighting" value="Raindrops on window with blurred city lights"><span>Raindrops on window with blurred city lights</span></label>
+                <label><input type="radio" name="lighting" value="Foggy atmosphere with diffused light"><span>Foggy atmosphere with diffused light</span></label>
+            </div>
+        </div>
+
+        <div class="category">
+            <h3>Аксессуары</h3>
+            <div class="options" id="accessoriesOptions">
+                <label><input type="checkbox" name="accessories" value="Gold hoop earrings"><span>Gold hoop earrings</span></label>
+                <label><input type="checkbox" name="accessories" value="Layered thin necklaces"><span>Layered thin necklaces</span></label>
+                <label><input type="checkbox" name="accessories" value="Pearl choker"><span>Pearl choker</span></label>
+                <label><input type="checkbox" name="accessories" value="Vintage Cartier watch style"><span>Vintage Cartier watch style</span></label>
+                <label><input type="checkbox" name="accessories" value="Diamond ear cuffs"><span>Diamond ear cuffs</span></label>
+                <label><input type="checkbox" name="accessories" value="Coffee to-go cup in hand"><span>Coffee to-go cup in hand</span></label>
+                <label><input type="checkbox" name="accessories" value="Retro film camera around neck"><span>Retro film camera around neck</span></label>
+                <label><input type="checkbox" name="accessories" value="Designer sunglasses on head"><span>Designer sunglasses on head</span></label>
+                <label><input type="checkbox" name="accessories" value="Silk hair scarf"><span>Silk hair scarf</span></label>
+                <label><input type="checkbox" name="accessories" value="AirPods Max headphones"><span>AirPods Max headphones</span></label>
+            </div>
+        </div>
+
+        <div class="category">
+            <h3>Настройки Камеры и Детализации (Технический Реализм)</h3>
+            <div class="options" id="cameraSettingsOptions">
+                <label><input type="radio" name="cameraSettings" value="Shot on Sony A7R IV, 35mm f/1.4 lens"><span>Sony A7R IV, 35mm f/1.4</span></label>
+                <label><input type="radio" name="cameraSettings" value="Shot on Leica M11, 50mm f/1.8 lens"><span>Leica M11, 50mm f/1.8</span></label>
+                <label><input type="radio" name="cameraSettings" value="Shot on Fujifilm X-T4, 85mm portrait lens"><span>Fujifilm X-T4, 85mm portrait</span></label>
+                <label><input type="radio" name="cameraSettings" value="Shot on iPhone 15 Pro Cinematic, handheld"><span>iPhone 15 Pro Cinematic</span></label>
+                <label><input type="radio" name="cameraSettings" value="Shot on Canon EOS R5, 24mm wide angle"><span>Canon EOS R5, 24mm wide angle</span></label>
+                <label><input type="radio" name="cameraSettings" value="Film grain ISO 400, Kodak Portra 400"><span>Film grain, Kodak Portra 400</span></label>
+                <label><input type="radio" name="cameraSettings" value="Film grain ISO 800, Fujifilm Superia"><span>Film grain, Fujifilm Superia</span></label>
+                <label><input type="radio" name="cameraSettings" value="Slight motion blur, chromatic aberration"><span>Motion blur, chromatic aberration</span></label>
+                <label><input type="radio" name="cameraSettings" value="Deep depth of field, sharp focus on subject"><span>Deep DoF, sharp focus</span></label>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button id="generateBtn">Сгенерировать Промпт</button>
+            <button id="randomizeBtn">Случайный Промпт</button>
+            <button id="copyBtn">Скопировать Промпт</button>
+        </div>
+
+        <div id="promptOutput">
+            Ваш сгенерированный промпт появится здесь.
+        </div>
+    </div>
+
+    <script>
+        const categories = {
+            style: [
+                "Casual Lifestyle", "Raw Minimalism", "Scandi-Style", "Parisienne", "High-End Street Photography",
+                "Quiet Luxury", "Editorial Fashion", "Dark Academia", "Boho-Chic", "Vintage 70s", "Preppy"
+            ],
+            location: [
+                "Luxury penthouse", "Underground parking", "Night gas station", "Glass elevator", "Subway car",
+                "NYC rooftop", "Foggy pine forest", "Black sand beach", "Lavender field", "Desert dunes",
+                "Waterfall mist", "Tropical greenhouse", "Minimalist cafe", "Art gallery", "Old library",
+                "Tennis court", "Infinity pool", "Designer hotel lobby"
+            ],
+            clothing: [
+                "Wrinkled linen dress", "Ribbed knitwear sweater", "Reflective silk slip dress", "Rough leather trench coat",
+                "Heavy denim jacket", "Translucent chiffon blouse", "Oversized blazer", "Cashmere turtleneck",
+                "Crop top with high-waisted jeans", "High-waisted wool trousers"
+            ],
+            lighting: [
+                "Golden hour light", "Blue hour glow", "Soft window light", "Harsh direct sunlight with sharp shadows",
+                "Neon flickering reflections", "Moonlight with deep shadows", "Dust motes in sunbeams",
+                "Lens flare from streetlights", "Raindrops on window with blurred city lights", "Foggy atmosphere with diffused light"
+            ],
+            accessories: [
+                "Gold hoop earrings", "Layered thin necklaces", "Pearl choker", "Vintage Cartier watch style",
+                "Diamond ear cuffs", "Coffee to-go cup in hand", "Retro film camera around neck",
+                "Designer sunglasses on head", "Silk hair scarf", "AirPods Max headphones"
+            ],
+            cameraSettings: [
+                "Shot on Sony A7R IV, 35mm f/1.4 lens", "Shot on Leica M11, 50mm f/1.8 lens",
+                "Shot on Fujifilm X-T4, 85mm portrait lens", "Shot on iPhone 15 Pro Cinematic, handheld",
+                "Shot on Canon EOS R5, 24mm wide angle", "Film grain ISO 400, Kodak Portra 400",
+                "Film grain ISO 800, Fujifilm Superia", "Slight motion blur, chromatic aberration",
+                "Deep depth of field, sharp focus on subject"
+            ]
+        };
+
+        // Базовые параметры реализма - добавляются всегда
+        const realismBase = `highly detailed skin texture, visible pores, micro-imperfections, natural skin grain, non-retouched, authentic skin tones, subtle fine lines, realistic subsurface scattering, natural highlights on cheekbones, detailed iris, reflections in eyes, moist eyeballs, baby hairs, wispy hair strands, natural messy hairline, split ends detail, 8k resolution`;
+
+        // Негативные промпты - добавляются всегда для исключения "пластика"
+        const negativePromptBase = `(plastic, smooth skin, blur, 3d, cg, cartoon, anime, doll, airbrushed, drawing, painting, unnatural, low quality)`;
+
+        function generatePrompt() {
+            const referenceImage = document.getElementById('referenceImage').value.trim();
+            if (!referenceImage) {
+                alert('Пожалуйста, вставьте ссылку на референсное изображение.');
+                return;
+            }
+
+            let selectedOptions = [];
+
+            // Get selected radio button values
+            document.querySelectorAll('.category .options input[type="radio"]:checked').forEach(input => {
+                selectedOptions.push(input.value);
+            });
+
+            // Get selected checkbox values (for accessories)
+            const selectedAccessories = [];
+            document.querySelectorAll('#accessoriesOptions input[type="checkbox"]:checked').forEach(input => {
+                selectedAccessories.push(input.value);
+            });
+            if (selectedAccessories.length > 0) {
+                selectedOptions.push(selectedAccessories.join(', '));
+            }
+
+            let prompt = `${referenceImage}, `;
+            if (selectedOptions.length > 0) {
+                prompt += selectedOptions.join(', ') + ', ';
+            }
+            prompt += realismBase;
+            prompt += ` --ar 4:5 --v 6.0 --q 2 --style raw --s 250 --no ${negativePromptBase}`; // Midjourney v6 параметры
+
+            document.getElementById('promptOutput').textContent = prompt;
+        }
+
+        function randomizePrompt() {
+            const referenceImage = document.getElementById('referenceImage').value.trim();
+            if (!referenceImage) {
+                alert('Пожалуйста, вставьте ссылку на референсное изображение.');
+                return;
+            }
+
+            let randomOptions = [];
+
+            // Select one random option from each radio category
+            for (const categoryName in categories) {
+                if (categoryName !== 'accessories') { // Accessories can have multiple, handled below
+                    const options = categories[categoryName];
+                    const randomIndex = Math.floor(Math.random() * options.length);
+                    randomOptions.push(options[randomIndex]);
+                    // Update the UI to reflect the random selection
+                    document.querySelector(`input[name="${categoryName}"][value="${options[randomIndex]}"]`).checked = true;
+                }
+            }
+
+            // Randomly select 0 to 3 accessories
+            const randomAccessories = [];
+            const allAccessories = categories['accessories'];
+            const numAccessoriesToSelect = Math.floor(Math.random() * 4); // 0, 1, 2, or 3
+            let shuffledAccessories = allAccessories.sort(() => 0.5 - Math.random()); // Shuffle
+            for (let i = 0; i < numAccessoriesToSelect; i++) {
+                randomAccessories.push(shuffledAccessories[i]);
+            }
+            if (randomAccessories.length > 0) {
+                randomOptions.push(randomAccessories.join(', '));
+            }
+            // Update UI for accessories (uncheck all first, then check selected)
+            document.querySelectorAll('#accessoriesOptions input[type="checkbox"]').forEach(cb => cb.checked = false);
+            randomAccessories.forEach(acc => {
+                const cb = document.querySelector(`input[name="accessories"][value="${acc}"]`);
+                if (cb) cb.checked = true;
+            });
+
+            let prompt = `${referenceImage}, `;
+            prompt += randomOptions.join(', ') + ', ';
+            prompt += realismBase;
+            prompt += ` --ar 4:5 --v 6.0 --q 2 --style raw --s 250 --no ${negativePromptBase}`;
+
+            document.getElementById('promptOutput').textContent = prompt;
+        }
+
+        function copyPrompt() {
+            const promptOutput = document.getElementById('promptOutput');
+            if (promptOutput.textContent) {
+                navigator.clipboard.writeText(promptOutput.textContent)
+                    .then(() => {
+                        alert('Промпт скопирован в буфер обмена!');
+                    })
+                    .catch(err => {
+                        console.error('Ошибка копирования: ', err);
+                        alert('Не удалось скопировать промпт. Попробуйте вручную.');
+                    });
+            } else {
+                alert('Сначала сгенерируйте промпт!');
+            }
+        }
+
+        document.getElementById('generateBtn').addEventListener('click', generatePrompt);
+        document.getElementById('randomizeBtn').addEventListener('click', randomizePrompt);
+        document.getElementById('copyBtn').addEventListener('click', copyPrompt);
+
+        // Инициализация - случайный промпт при загрузке страницы, если есть референс (пока отключим, чтобы не выскакивал алерт)
+        // window.onload = () => {
+        //     const refInput = document.getElementById('referenceImage');
+        //     if (refInput.value) { // Если в поле уже что-то есть
+        //         randomizePrompt();
+        //     }
+        // };
+    </script>
+</body>
+</html>
