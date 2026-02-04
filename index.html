@@ -447,7 +447,7 @@
       <div class="row" style="margin-top:10px;">
         <div class="in"><input id="basePrompt" placeholder="Base prompt (например: high-end Instagram portrait, clean minimal styling)"/></div>
         <div class="in"><input id="avoid" placeholder="Avoid (через запятую): watermark, blurry, extra fingers, bad text..."/></div>
-        <div class="in"><input id="template" placeholder="(optional) Add-on: 'black nails, silver earrings, minimal makeup'"/></div>
+        <div class="in"><input id="addon" placeholder="(optional) Add-on: 'black nails, silver earrings, minimal makeup'"/></div>
       </div>
 
       <div class="actions">
@@ -474,25 +474,21 @@
 
 <script>
   // =========================
-  // State (defaults requested)
+  // State (defaults)
   // =========================
   const state = {
     model: "gemini-3-pro-image-preview",
-    aspectRatio: "1:1",    // default 1:1
-    imageSize: "4K",       // default 4K
-    realismLock: true,     // default ON
+    aspectRatio: "1:1",      // default 1:1
+    imageSize: "4K",         // default 4K
+    realismLock: true,       // default ON
     reference: null,
     abort: null,
-    prompts: []
+    items: [],               // [{prompt, presetLabel, presetCat}]
   };
 
   const $ = (id) => document.getElementById(id);
   const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-  function uuid(){
-    return (crypto?.randomUUID ? crypto.randomUUID() : (Date.now() + "-" + Math.random().toString(16).slice(2)));
-  }
 
   // =========================
   // Toggle wiring
@@ -530,7 +526,7 @@
   setCols($("colsRange").value);
   setTile($("tileRange").value);
 
-  // Ensure count label matches default slider value on load
+  // Ensure labels match defaults on load
   $("countVal").textContent = $("countRange").value;
   $("concVal").textContent = $("concRange").value;
 
@@ -558,22 +554,17 @@
   }
 
   function requireKeyForImages(){
-    if (!getKey()) {
-      openModal();
-      return false;
-    }
+    if (!getKey()) { openModal(); return false; }
     return true;
   }
 
   $("keyBtn").onclick = openModal;
   $("closeModal").onclick = closeModal;
 
-  // close on backdrop click
   $("modal").addEventListener("click", (e) => {
     if (e.target === $("modal")) closeModal();
   });
 
-  // close on Escape
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeModal();
   });
@@ -768,21 +759,11 @@
   ];
 
   // =========================
-  // Uniqueness helpers
+  // Prompt builder (no Unique tag)
+  // mode: "prompts" -> includes ratio in prompt
+  //       "images"  -> ratio NOT in prompt (ratio comes from API imageConfig)
   // =========================
-  function signature(v){
-    return [
-      v.preset.id,
-      v.subject,
-      v.wardrobe,
-      v.palette,
-      v.extraProp,
-      v.details,
-      v.micro
-    ].join("|").toLowerCase();
-  }
-
-  function buildPromptFromVars(v, base, avoid, addon){
+  function buildPromptFromVars(v, base, avoid, addon, mode){
     const baseLine = (base || "").trim() ? base.trim() + ". " : "";
     const extra = (addon || "").trim();
 
@@ -793,11 +774,11 @@
       `Accessories/prop: ${v.extraProp}. Details: ${v.details}. ${v.micro}.` +
       (extra ? ` Additional notes: ${extra}.` : "");
 
+    const ratioLine = (mode === "prompts") ? `Requested aspect ratio: ${state.aspectRatio}.` : "";
+
     const refLine = state.reference
       ? "Use the attached reference image; keep the same identity and key facial features. Keep hair flow/parting consistent with the reference. Do not beautify or smooth skin."
       : "";
-
-    const uniq = `Unique tag: ${uuid()}.`;
 
     if (state.realismLock){
       const poresLine = (v.preset.cat === "closeup" || v.preset.cat === "emotion_closeup")
@@ -807,18 +788,18 @@
       const userAvoid = (avoid || "").trim();
       const avoidLine = `Avoid: ${REALISM_NEGATIVE}${userAvoid ? ", " + userAvoid : ""}.`;
 
-      return `${baseLine}${presetBlock} ${sceneAdd} ${REALISM_CORE}. ${poresLine} ${refLine} ${avoidLine} ${uniq}`
+      return `${baseLine}${presetBlock} ${sceneAdd} ${REALISM_CORE}. ${poresLine} ${refLine} ${avoidLine} ${ratioLine}`
         .replace(/\s+/g," ").trim();
     } else {
       const avoidLine = (avoid || "").trim() ? `Avoid: ${avoid.trim()}.` : "";
-      return `${baseLine}${presetBlock} ${sceneAdd} ${refLine} ${avoidLine} ${uniq}`
+      return `${baseLine}${presetBlock} ${sceneAdd} ${refLine} ${avoidLine} ${ratioLine}`
         .replace(/\s+/g," ").trim();
     }
   }
 
-  function generateUniquePrompts(count, base, avoid, addon){
+  function generateUniqueItems(count, base, avoid, addon, mode){
     const used = new Set();
-    const prompts = [];
+    const items = [];
 
     const presetsShuffled = [...POSE_PRESETS].sort(() => Math.random() - 0.5);
 
@@ -827,9 +808,21 @@
     const recentWindowPreset = 10;
     const recentWindowCat = 6;
 
+    function sig(v){
+      return [
+        v.preset.id,
+        v.subject,
+        v.wardrobe,
+        v.palette,
+        v.extraProp,
+        v.details,
+        v.micro
+      ].join("|").toLowerCase();
+    }
+
     for (let i = 0; i < count; i++){
       let tries = 0;
-      let v, sig;
+      let v, s;
 
       while (true){
         let preset = presetsShuffled[i % presetsShuffled.length];
@@ -851,14 +844,14 @@
           micro: rand(db.microVariation)
         };
 
-        sig = signature(v);
+        s = sig(v);
         tries++;
 
-        if (!used.has(sig)) break;
+        if (!used.has(s)) break;
         if (tries > 90) break;
       }
 
-      used.add(sig);
+      used.add(s);
 
       recentPreset.push(v.preset.id);
       while (recentPreset.length > recentWindowPreset) recentPreset.shift();
@@ -866,22 +859,25 @@
       recentCat.push(v.preset.cat);
       while (recentCat.length > recentWindowCat) recentCat.shift();
 
-      prompts.push(buildPromptFromVars(v, base, avoid, addon));
+      const prompt = buildPromptFromVars(v, base, avoid, addon, mode);
+      items.push({ prompt, presetLabel: v.preset.label, presetCat: v.preset.cat });
     }
 
-    return prompts;
+    return items;
   }
 
   // =========================
   // Render cards
   // =========================
-  function makeCard(i, prompt){
+  function makeCard(i, item){
     const el = document.createElement("div");
     el.className = "card";
     el.innerHTML = `
       <div class="thumb" id="thumb_${i}">Prompt ready</div>
       <div class="meta">
-        <div class="tag">#${i+1} · ${state.model} · ${state.aspectRatio} · ${state.imageSize} · realism:${state.realismLock ? "ON" : "off"}</div>
+        <div class="tag">
+          #${i+1} · ${state.model} · ${state.aspectRatio} · ${state.imageSize} · realism:${state.realismLock ? "ON" : "off"} · ${item.presetLabel}
+        </div>
         <pre id="p_${i}"></pre>
       </div>
       <div class="mini">
@@ -889,8 +885,8 @@
         <button class="mbtn" id="dl_${i}" disabled>Download</button>
       </div>
     `;
-    el.querySelector(`#p_${i}`).textContent = prompt;
-    el.querySelector(`#cp_${i}`).onclick = () => navigator.clipboard.writeText(prompt);
+    el.querySelector(`#p_${i}`).textContent = item.prompt;
+    el.querySelector(`#cp_${i}`).onclick = () => navigator.clipboard.writeText(item.prompt);
     return el;
   }
 
@@ -910,6 +906,12 @@
       a.download = `nanobanana_${String(i+1).padStart(3,"0")}.png`;
       a.click();
     };
+  }
+
+  function renderBatch(items){
+    const grid = $("grid");
+    grid.innerHTML = "";
+    items.forEach((it,i)=> grid.appendChild(makeCard(i, it)));
   }
 
   // =========================
@@ -972,22 +974,16 @@
   // =========================
   // Batch runners
   // =========================
-  function renderPromptBatch(prompts){
-    const grid = $("grid");
-    grid.innerHTML = "";
-    prompts.forEach((p,i)=> grid.appendChild(makeCard(i, p)));
-  }
-
   async function runPromptsOnly(){
     const count = Number($("countRange").value);
     const base  = $("basePrompt").value;
     const avoid = $("avoid").value;
-    const addon = $("template").value;
+    const addon = $("addon").value;
 
-    state.prompts = generateUniquePrompts(count, base, avoid, addon);
-    window.__PROMPTS_TXT = state.prompts.join("\n\n");
+    state.items = generateUniqueItems(count, base, avoid, addon, "prompts");
+    window.__PROMPTS_TXT = state.items.map(x => x.prompt).join("\n\n");
 
-    renderPromptBatch(state.prompts);
+    renderBatch(state.items);
 
     $("copyPromptsBtn").disabled = false;
     $("stopBtn").style.display = "none";
@@ -1001,12 +997,13 @@
     const conc  = Number($("concRange").value);
     const base  = $("basePrompt").value;
     const avoid = $("avoid").value;
-    const addon = $("template").value;
+    const addon = $("addon").value;
 
-    state.prompts = generateUniquePrompts(count, base, avoid, addon);
-    window.__PROMPTS_TXT = state.prompts.join("\n\n");
+    state.items = generateUniqueItems(count, base, avoid, addon, "images");
+    window.__PROMPTS_TXT = state.items.map(x => x.prompt).join("\n\n");
 
-    renderPromptBatch(state.prompts);
+    renderBatch(state.items);
+
     $("copyPromptsBtn").disabled = false;
 
     state.abort = new AbortController();
@@ -1028,17 +1025,18 @@
           let attempt = 0;
           while (true) {
             try{
-              const img = await generateOne(state.prompts[i], state.abort.signal);
+              const img = await generateOne(state.items[i].prompt, state.abort.signal);
               await setThumbImage(i, img.mime, img.base64);
               break;
             } catch(e){
               attempt++;
               const status = e.status || 0;
 
-              // If quota is 0, retries are pointless
+              // Quota 0 -> no sense to retry
               const msg = String(e.message || e);
-              const zeroQuota = msg.includes("Quota exceeded") && msg.includes("limit: 0");
-              if (zeroQuota) throw new Error("Quota is 0 for this model/project. Enable billing/upgrade tier, or switch model.");
+              if (msg.includes("Quota exceeded") && msg.includes("limit: 0")) {
+                throw new Error("Quota is 0 for this model/project. Enable billing/upgrade tier, or switch model.");
+              }
 
               if ((status === 429 || status === 503) && attempt <= 6) {
                 const backoff = Math.min(9000, 600 * Math.pow(2, attempt));
