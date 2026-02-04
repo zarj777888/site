@@ -23,7 +23,7 @@
       --thumbH: 240px;
 
       /* dock */
-      --dockH: 240px;
+      --dockH: 262px;
     }
 
     *{box-sizing:border-box;}
@@ -164,7 +164,7 @@
       position:fixed;
       left:0; right:0; bottom:0;
       padding:14px 18px;
-      background: rgba(16,16,16,.80);
+      background: rgba(16,16,16,.82);
       border-top: 1px solid rgba(255,255,255,.08);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -205,25 +205,6 @@
     }
     .tbtn:hover{color:#fff;}
     .tbtn.active{background:var(--accent); color:#000;}
-
-    .field{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      background:#000;
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:10px 12px;
-    }
-    .field input,.field select{
-      background:transparent;
-      border:0;
-      outline:0;
-      color:#fff;
-      font-size:14px;
-      min-width:120px;
-    }
-    .field small{color:var(--dim); font-size:12px; font-weight:900;}
 
     .in{
       flex:1;
@@ -411,9 +392,9 @@
       </div>
 
       <div class="row" style="margin-top:10px;">
-        <div class="in"><input id="basePrompt" placeholder="Base prompt (например: luxury street portrait, wet asphalt, candid)"/></div>
+        <div class="in"><input id="basePrompt" placeholder="Base prompt (например: high-end Instagram portrait, clean minimal styling)"/></div>
         <div class="in"><input id="avoid" placeholder="Avoid (через запятую): watermark, blurry, extra fingers, bad text..."/></div>
-        <div class="in"><input id="template" placeholder="Template: {subject}, {shot}, {place} ... (optional)"/></div>
+        <div class="in"><input id="template" placeholder="(optional) Template add-on (например: 'black nails, silver earrings, minimal makeup')"/></div>
       </div>
 
       <div class="actions">
@@ -429,7 +410,7 @@
   <div class="modal" id="modal">
     <div class="box">
       <h3>Gemini API key</h3>
-      <p>Ключ нужен только для генерации изображений (REST использует заголовок <code>x-goog-api-key</code>). Качество 1K/2K/4K задаётся через <code>imageConfig.imageSize</code> и <b>K</b> должна быть заглавной. [page:0]</p>
+      <p>Ключ нужен только для генерации изображений. Ввод сохраняется в sessionStorage (только в этой вкладке).</p>
       <div class="row2">
         <input id="apiKeyInput" placeholder="AIza..."/>
         <button class="save" id="saveKey">Save</button>
@@ -444,8 +425,8 @@
   const state = {
     model: "gemini-3-pro-image-preview",
     aspectRatio: "16:9",
-    imageSize: "1K",        // 1K/2K/4K (uppercase K) [page:0]
-    realismLock: true,      // Ultra realism lock ON by default
+    imageSize: "1K",
+    realismLock: true,   // Ultra realism lock ON by default
     reference: null,
     abort: null,
     prompts: []
@@ -569,7 +550,8 @@
     "sharp micro-contrast",
     "natural depth of field",
     "authentic high-end Instagram editorial look",
-    "realistic shadows and reflections"
+    "realistic shadows and reflections",
+    "realistic material response (fabric, skin specular, glass reflections)"
   ].join(", ");
 
   const REALISM_NEGATIVE = [
@@ -581,24 +563,14 @@
   ].join(", ");
 
   // =========================
-  // Prompt DB (шире = меньше похожих сюжетов)
+  // Prompt DB (вариативность)
   // =========================
   const db = {
     subject: [
-      "female model", "male model", "androgynous model",
-      "street photographer", "fashion stylist", "creative director",
-      "chef", "architect", "barista", "boxer", "dancer"
+      "female subject", "male subject", "androgynous subject",
+      "fashion model", "creative director", "street photographer",
+      "barista", "architect", "dancer", "boxer"
     ],
-    shot: [
-      "extreme close-up portrait", "close-up portrait", "half-body portrait",
-      "full body street shot", "candid lifestyle shot", "editorial lookbook shot"
-    ],
-    action: [
-      "standing confidently", "walking dynamically", "sitting elegantly",
-      "looking over shoulder", "laughing candidly", "serious editorial pose",
-      "adjusting jacket", "fixing hair", "checking phone"
-    ],
-    emotion: ["calm", "confident", "playful", "mysterious", "soft smile", "serious"],
     wardrobe: [
       "oversized blazer", "tailored suit", "white linen shirt",
       "cashmere turtleneck", "leather biker jacket", "minimal black coat",
@@ -606,151 +578,216 @@
     ],
     palette: [
       "neutral tones", "monochrome black", "warm earth tones",
-      "navy & gold accents", "soft beige and cream", "desaturated cinematic colors"
+      "soft beige and cream", "desaturated cinematic colors", "navy & gold accents"
     ],
-    place: [
-      "night city street", "minimalist studio", "rooftop skyline",
-      "underground parking", "old library", "art gallery",
-      "boutique storefront", "subway entrance", "hotel lobby", "industrial loft"
-    ],
-    background: [
-      "busy street bokeh", "minimal concrete wall", "glass reflections",
-      "neon signage bokeh", "soft city lights", "clean architectural lines",
-      "rainy asphalt reflections", "warm indoor lamps"
-    ],
-    time: [
-      "early morning", "midday", "golden hour sunset",
-      "blue hour", "night", "rainy evening", "foggy morning"
-    ],
-    weather: [
-      "clear air", "light rain", "mist in the air",
-      "wet asphalt reflections", "soft haze", "crisp winter air"
-    ],
-    lighting: [
-      "soft window light", "golden hour", "blue hour",
-      "neon rim light", "hard on-camera flash", "cinematic shadows",
-      "overcast diffused light"
-    ],
-    lens: ["35mm", "50mm", "85mm", "24mm wide angle"],
-    aperture: ["f/1.8", "f/2.0", "f/2.8", "f/4"],
-    camera: ["Sony A7R IV", "Leica M11", "Canon R5", "Nikon Z8", "iPhone 15 Pro"],
     props: [
-      "holding an iced coffee", "holding a phone", "earbuds",
-      "small handbag", "newspaper", "umbrella", "vintage camera",
-      "shopping bag", "sunglasses"
+      "no accessories", "subtle jewelry", "small handbag", "sunglasses",
+      "phone in hand", "coffee cup", "umbrella", "newspaper", "vintage camera"
     ],
     details: [
-      "clean manicure", "natural eyebrows", "subtle makeup",
-      "natural lip texture", "realistic fabric weave", "fine hair strands",
-      "realistic eye reflections (catchlights)", "authentic street styling"
+      "natural eyebrows", "subtle makeup", "natural lip texture",
+      "realistic fabric weave", "fine hair strands", "realistic catchlights",
+      "clean manicure", "natural flyaway hairs"
+    ],
+    microVariation: [
+      "slight head tilt", "gentle shoulder angle", "micro expression change",
+      "soft breathing realism", "tiny asymmetry preserved", "authentic posture"
     ]
   };
 
-  // Template support (optional)
-  function applyTemplate(tpl, v){
-    return tpl
-      .replaceAll("{subject}", v.subject)
-      .replaceAll("{shot}", v.shot)
-      .replaceAll("{action}", v.action)
-      .replaceAll("{emotion}", v.emotion)
-      .replaceAll("{wardrobe}", v.wardrobe)
-      .replaceAll("{palette}", v.palette)
-      .replaceAll("{place}", v.place)
-      .replaceAll("{background}", v.background)
-      .replaceAll("{time}", v.time)
-      .replaceAll("{weather}", v.weather)
-      .replaceAll("{lighting}", v.lighting)
-      .replaceAll("{lens}", v.lens)
-      .replaceAll("{aperture}", v.aperture)
-      .replaceAll("{camera}", v.camera)
-      .replaceAll("{prop}", v.prop)
-      .replaceAll("{details}", v.details);
-  }
+  // =========================
+  // Pose presets (твоя инструкция)
+  // =========================
+  const POSE_PRESETS = [
+    // Close-up / Face angles
+    { id:"cu_frontal", cat:"closeup", label:"Frontal tight headshot",
+      text:"Tight headshot, camera straight on, neutral expression, 85mm portrait look, shallow depth of field (f/2.0), even soft light, neutral grey background." },
+    { id:"cu_34_left", cat:"closeup", label:"3/4 view left",
+      text:"Close-up 3/4 view facing left, chin slightly down, eyes to camera, 85mm portrait, soft wrap light, clean studio background." },
+    { id:"cu_34_right", cat:"closeup", label:"3/4 view right",
+      text:"Close-up 3/4 view facing right, relaxed mouth, catchlights visible, gentle rim light on hair, simple backdrop." },
+    { id:"cu_profile_left", cat:"closeup", label:"Profile left",
+      text:"Clean profile (left side), ear visible, hair neatly following the reference shape, beauty portrait lighting, uncluttered background." },
+    { id:"cu_profile_right", cat:"closeup", label:"Profile right",
+      text:"Clean profile (right side), neck elongated, hair silhouette matches reference, soft key + subtle rim, studio backdrop." },
+    { id:"cu_high_angle", cat:"closeup", label:"High-angle close-up",
+      text:"Close-up from a slightly high camera angle, subject looking up with eyes to lens, cheeks and hairline preserved, soft top light, minimal shadows." },
+    { id:"cu_low_angle", cat:"closeup", label:"Low-angle close-up",
+      text:"Close-up from a slightly low angle, subtle confident look, precise hair volume per reference, controlled contrast, neutral background." },
+    { id:"cu_turn_eyes", cat:"closeup", label:"Face turned, eyes to lens",
+      text:"Head turned 30° off-axis, eyes glancing back at camera, natural lips, exact hair flow and parting as reference, soft directional light." },
+    { id:"cu_shoulders_smile", cat:"closeup", label:"Shoulders-up, gentle smile",
+      text:"Shoulders-up portrait, gentle closed-lip smile, hair shape intact, soft front key, faint vignette, simple studio background." },
+    { id:"cu_hand_chin", cat:"closeup", label:"Hand-to-chin pose",
+      text:"Close-up, hand lightly touching chin without covering facial landmarks, hair strands preserved, balanced soft lighting, plain background." },
 
-  // Уникальная "сигнатура сюжета" (чтобы не было похожих сцен)
+    // Full-body / Studio poses
+    { id:"fb_standing_neutral", cat:"fullbody_studio", label:"Standing neutral pose",
+      text:"Full-body shot, subject standing straight, arms relaxed at sides, facing camera, neutral expression, studio white background, even lighting." },
+    { id:"fb_walking_forward", cat:"fullbody", label:"Walking forward",
+      text:"Full-body walking pose, one foot forward, arms swinging naturally, looking at camera, street-like neutral background, daylight soft shadows." },
+    { id:"fb_crossed_arms", cat:"fullbody_studio", label:"Crossed arms",
+      text:"Full-body standing pose, arms crossed, confident neutral stance, camera straight-on, seamless grey background." },
+    { id:"fb_hands_pockets", cat:"fullbody_studio", label:"Hands in pockets",
+      text:"Full-body pose, both hands in pockets, relaxed neutral posture, natural hair preserved, simple studio backdrop." },
+    { id:"fb_seated_chair", cat:"fullbody_studio", label:"Seated on chair",
+      text:"Full-body seated on a plain chair, legs crossed casually, upper body upright, camera slightly lower angle, plain neutral background." },
+    { id:"fb_hand_hip", cat:"fullbody_studio", label:"One hand on hip",
+      text:"Full-body standing pose, one hand resting on hip, head slightly tilted, hair shape preserved, soft directional studio lighting." },
+    { id:"fb_lean_wall", cat:"fullbody", label:"Leaning against wall",
+      text:"Full-body leaning casually against a wall, arms relaxed, legs slightly crossed, natural confident look, urban minimal background." },
+    { id:"fb_dynamic_step", cat:"fullbody", label:"Dynamic step to the side",
+      text:"Full-body in mid-step to the side, arms in natural motion, body dynamic but identity intact, clean neutral background." },
+    { id:"fb_hands_back", cat:"fullbody_studio", label:"Hands behind back",
+      text:"Full-body standing pose, hands loosely clasped behind back, posture upright, calm facial expression, soft studio light." },
+    { id:"fb_sitting_floor", cat:"fullbody_studio", label:"Sitting on floor pose",
+      text:"Full-body seated on the floor, legs crossed casually, hands resting on knees, looking slightly up at camera, minimalistic background." },
+
+    // Everyday / Lifestyle scenes
+    { id:"ls_reading_bed", cat:"lifestyle", label:"Reading on bed",
+      text:"Full-body shot, lying on bed on side, holding a book, relaxed expression, daylight from window, cozy bedroom background." },
+    { id:"ls_stretch_wakeup", cat:"lifestyle", label:"Stretching after waking up",
+      text:"Full-body pose on bed, arms stretched upward as if just waking up, natural daylight, minimalistic bedroom interior." },
+    { id:"ls_cooking_kitchen", cat:"lifestyle", label:"Cooking in kitchen",
+      text:"Full-body in a modern kitchen, standing by counter, stirring a pot, casual clothes, warm daylight entering room." },
+    { id:"ls_desk_laptop", cat:"lifestyle", label:"Sitting at a desk with laptop",
+      text:"Full-body sitting at home desk, typing on a laptop, posture upright but relaxed, natural sunlight from window." },
+    { id:"ls_coffee_cafe", cat:"lifestyle", label:"Drinking coffee at café table",
+      text:"Full-body seated at a small café table, cup of coffee in hand, casual expression, daylight, blurred background of café interior." },
+    { id:"ls_look_window", cat:"lifestyle", label:"Looking out window",
+      text:"Full-body pose standing near window, hands resting on sill, natural daylight illuminating face, home environment visible." },
+    { id:"ls_sofa_phone", cat:"lifestyle", label:"Relaxed on sofa with phone",
+      text:"Full-body lounging on sofa, holding phone, relaxed casual posture, warm daylight from side window." },
+    { id:"ls_walk_cafe", cat:"lifestyle", label:"Walking in café interior",
+      text:"Full-body walking pose inside café, tray in hand, natural soft lighting, wooden tables in background." },
+    { id:"ls_bed_laptop", cat:"lifestyle", label:"Sitting cross-legged on bed with laptop",
+      text:"Full-body on bed, sitting cross-legged, laptop open on lap, casual clothing, daylight streaming from window." },
+    { id:"ls_kitchen_mug", cat:"lifestyle", label:"Leaning on kitchen counter with mug",
+      text:"Full-body standing casually against kitchen counter, holding mug with both hands, natural daylight, modern cozy kitchen." },
+
+    // Selfies
+    { id:"sf_mirror_home", cat:"selfie", label:"Mirror selfie at home",
+      text:"Selfie in mirror with phone in hand, full body visible, casual indoor background, natural daylight from window, relaxed expression." },
+    { id:"sf_outdoor", cat:"selfie", label:"Outdoor selfie",
+      text:"Handheld selfie outdoors, camera slightly above eye level, natural sunlight, blurred city street background, casual friendly smile." },
+    { id:"sf_bedtime", cat:"selfie", label:"Bedtime selfie",
+      text:"Close selfie while lying on bed, head resting on pillow, soft daylight from side window, neutral calm expression." },
+    { id:"sf_cafe", cat:"selfie", label:"Café selfie",
+      text:"Selfie at café table, cup of coffee in frame, warm ambient light, cozy modern café background, casual relaxed look." },
+
+    // Laughing / Emotion
+    { id:"em_laugh_close", cat:"emotion_closeup", label:"Laughing in close-up",
+      text:"Tight portrait, subject laughing joyfully, teeth slightly visible, head tilted back a little, natural daylight, blurred neutral background." },
+    { id:"em_laugh_full", cat:"emotion_fullbody", label:"Full-body casual laugh",
+      text:"Full-body standing pose, subject mid-laughter, one hand near face, relaxed posture, daylight home environment background." },
+    { id:"em_laugh_seated", cat:"emotion", label:"Sitting and laughing",
+      text:"Seated pose, subject leaning slightly forward with laughter, hair preserved, cozy indoor background, warm natural light." }
+  ];
+
+  // =========================
+  // Uniqueness helpers
+  // =========================
   function signature(v){
     return [
-      v.subject, v.shot, v.place, v.time, v.weather,
-      v.lighting, v.wardrobe, v.prop, v.background
+      v.preset.id,
+      v.subject,
+      v.wardrobe,
+      v.palette,
+      v.extraProp,
+      v.details,
+      v.micro
     ].join("|").toLowerCase();
   }
 
-  function buildPromptFromVars(v, base, avoid, tpl){
+  function buildPromptFromVars(v, base, avoid, templateAddon){
     const baseLine = (base || "").trim() ? base.trim() + ". " : "";
+    const addon = (templateAddon || "").trim();
 
-    const scene = (tpl && tpl.includes("{subject}"))
-      ? applyTemplate(tpl, v)
-      : `${v.subject}, ${v.shot}, ${v.action}, emotion: ${v.emotion}. ` +
-        `Wearing: ${v.wardrobe} (palette: ${v.palette}). ` +
-        `Location: ${v.place}; background: ${v.background}. ` +
-        `Time: ${v.time}; atmosphere: ${v.weather}. ` +
-        `Lighting: ${v.lighting}. ` +
-        `Lens: ${v.lens}, aperture: ${v.aperture}. ` +
-        `Camera: ${v.camera}. ` +
-        `Prop: ${v.prop}. ` +
-        `Details: ${v.details}.`;
+    const presetBlock = v.preset.text;
+
+    // Без конфликтов с пресетом (не добавляем "Location:" и т.п. — пресет уже определяет сцену)
+    const sceneAdd =
+      `Subject: ${v.subject}. Wardrobe styling: ${v.palette} ${v.wardrobe}. ` +
+      `Accessories/prop: ${v.extraProp}. Details: ${v.details}. ${v.micro}.` +
+      (addon ? ` Additional notes: ${addon}.` : "");
 
     const refLine = state.reference
-      ? "Use the attached reference image; keep the same identity and key facial features. Keep skin texture natural; do not beautify or smooth skin."
+      ? "Use the attached reference image; keep the same identity and key facial features. Keep hair flow/parting consistent with the reference. Do not beautify or smooth skin."
       : "";
 
     const uniq = `Unique tag: ${uuid()}.`;
 
     if (state.realismLock){
+      const poresLine = (v.preset.cat === "closeup" || v.preset.cat === "emotion_closeup")
+        ? "Visible pores and natural micro-texture in close-ups, realistic skin specular highlights, no skin smoothing."
+        : "Natural skin texture, true-to-life materials, realistic lighting and shadows.";
+
       const userAvoid = (avoid || "").trim();
       const avoidLine = `Avoid: ${REALISM_NEGATIVE}${userAvoid ? ", " + userAvoid : ""}.`;
-      return `${baseLine}${scene} ${REALISM_CORE}. ${refLine} ${avoidLine} ${uniq}`.replace(/\s+/g," ").trim();
+
+      return `${baseLine}${presetBlock} ${sceneAdd} ${REALISM_CORE}. ${poresLine} ${refLine} ${avoidLine} ${uniq}`
+        .replace(/\s+/g," ").trim();
     } else {
       const avoidLine = (avoid || "").trim() ? `Avoid: ${avoid.trim()}.` : "";
-      return `${baseLine}${scene} ${refLine} ${avoidLine} ${uniq}`.replace(/\s+/g," ").trim();
+      return `${baseLine}${presetBlock} ${sceneAdd} ${refLine} ${avoidLine} ${uniq}`
+        .replace(/\s+/g," ").trim();
     }
   }
 
-  // Генерация промтов с анти-повторами (и "окном" недавних мест)
-  function generateUniquePrompts(count, base, avoid, tpl){
+  function generateUniquePrompts(count, base, avoid, templateAddon){
     const used = new Set();
     const prompts = [];
-    const recentPlaces = [];
-    const recentWindow = Math.min(12, Math.max(6, Math.floor(count / 6)));
+
+    // Перемешиваем пресеты: это уже сильно разносит сюжеты
+    const presetsShuffled = [...POSE_PRESETS].sort(() => Math.random() - 0.5);
+
+    // Запрещаем повторять один и тот же preset и категорию "слишком рядом"
+    const recentPreset = [];
+    const recentCat = [];
+    const recentWindowPreset = 10;
+    const recentWindowCat = 6;
 
     for (let i = 0; i < count; i++){
       let tries = 0;
       let v, sig;
 
       while (true){
+        // Выбор пресета: сначала циклом по перемешанному, затем случайно с ограничениями
+        let preset = presetsShuffled[i % presetsShuffled.length];
+
+        if (count > presetsShuffled.length) {
+          for (let t = 0; t < 30; t++){
+            const p = rand(POSE_PRESETS);
+            if (!recentPreset.includes(p.id) && !recentCat.includes(p.cat)) { preset = p; break; }
+          }
+        }
+
         v = {
+          preset,
           subject: rand(db.subject),
-          shot: rand(db.shot),
-          action: rand(db.action),
-          emotion: rand(db.emotion),
           wardrobe: rand(db.wardrobe),
           palette: rand(db.palette),
-          place: rand(db.place),
-          background: rand(db.background),
-          time: rand(db.time),
-          weather: rand(db.weather),
-          lighting: rand(db.lighting),
-          lens: rand(db.lens),
-          aperture: rand(db.aperture),
-          camera: rand(db.camera),
-          prop: rand(db.props),
-          details: rand(db.details)
+          extraProp: rand(db.props),
+          details: rand(db.details),
+          micro: rand(db.microVariation)
         };
 
         sig = signature(v);
-        const placeTooSoon = recentPlaces.includes(v.place);
-
         tries++;
-        const ok = !used.has(sig) && !placeTooSoon;
-        if (ok || tries > 60) break;
+
+        if (!used.has(sig)) break;
+        if (tries > 90) break; // на очень больших count может закончиться комбинационное пространство
       }
 
       used.add(sig);
 
-      recentPlaces.push(v.place);
-      while (recentPlaces.length > recentWindow) recentPlaces.shift();
+      recentPreset.push(v.preset.id);
+      while (recentPreset.length > recentWindowPreset) recentPreset.shift();
 
-      prompts.push(buildPromptFromVars(v, base, avoid, tpl));
+      recentCat.push(v.preset.cat);
+      while (recentCat.length > recentWindowCat) recentCat.shift();
+
+      prompts.push(buildPromptFromVars(v, base, avoid, templateAddon));
     }
 
     return prompts;
@@ -759,13 +796,13 @@
   // =========================
   // Render cards
   // =========================
-  function makeCard(i, prompt){
+  function makeCard(i, prompt, presetLabel){
     const el = document.createElement("div");
     el.className = "card";
     el.innerHTML = `
       <div class="thumb" id="thumb_${i}">Prompt ready</div>
       <div class="meta">
-        <div class="tag">#${i+1} · ${state.model} · ${state.aspectRatio} · ${state.imageSize} · realism:${state.realismLock ? "ON" : "off"}</div>
+        <div class="tag">#${i+1} · ${state.model} · ${state.aspectRatio} · ${state.imageSize} · realism:${state.realismLock ? "ON" : "off"} · ${presetLabel}</div>
         <pre id="p_${i}"></pre>
       </div>
       <div class="mini">
@@ -829,13 +866,13 @@
       contents: [{ role: "user", parts }],
       generationConfig: {
         responseModalities: ["TEXT","IMAGE"],
-        imageConfig: { aspectRatio: state.aspectRatio, imageSize: state.imageSize } // 1K/2K/4K [page:0]
+        imageConfig: { aspectRatio: state.aspectRatio, imageSize: state.imageSize }
       }
     };
 
     const r = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type":"application/json", "x-goog-api-key": apiKey }, // [page:0]
+      headers: { "Content-Type":"application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify(payload),
       signal
     });
@@ -856,18 +893,25 @@
   // =========================
   // Batch runners
   // =========================
+  function renderPromptBatch(prompts){
+    const grid = $("grid");
+    grid.innerHTML = "";
+
+    // Достаём label пресета из текста промта не будем; вместо этого отрисуем “mixed”
+    // (Если захочешь — можно вернуть из генератора не строки, а объекты {prompt, presetLabel}.)
+    prompts.forEach((p,i)=> grid.appendChild(makeCard(i, p, "mixed presets")));
+  }
+
   async function runPromptsOnly(){
     const count = Number($("countRange").value);
     const base  = $("basePrompt").value;
     const avoid = $("avoid").value;
-    const tpl   = $("template").value;
+    const addon = $("template").value;
 
-    state.prompts = generateUniquePrompts(count, base, avoid, tpl);
+    state.prompts = generateUniquePrompts(count, base, avoid, addon);
     window.__PROMPTS_TXT = state.prompts.join("\n\n");
 
-    const grid = $("grid");
-    grid.innerHTML = "";
-    state.prompts.forEach((p,i)=> grid.appendChild(makeCard(i,p)));
+    renderPromptBatch(state.prompts);
 
     $("copyPromptsBtn").disabled = false;
     $("stopBtn").style.display = "none";
@@ -881,15 +925,12 @@
     const conc  = Number($("concRange").value);
     const base  = $("basePrompt").value;
     const avoid = $("avoid").value;
-    const tpl   = $("template").value;
+    const addon = $("template").value;
 
-    state.prompts = generateUniquePrompts(count, base, avoid, tpl);
+    state.prompts = generateUniquePrompts(count, base, avoid, addon);
     window.__PROMPTS_TXT = state.prompts.join("\n\n");
 
-    const grid = $("grid");
-    grid.innerHTML = "";
-    state.prompts.forEach((p,i)=> grid.appendChild(makeCard(i,p)));
-
+    renderPromptBatch(state.prompts);
     $("copyPromptsBtn").disabled = false;
 
     state.abort = new AbortController();
