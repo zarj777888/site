@@ -286,13 +286,66 @@
     }
 
     /* Modal */
-    .modal{position:fixed; inset:0; background:rgba(0,0,0,.68); display:none; align-items:center; justify-content:center; padding:18px;}
-    .box{width:100%; max-width:620px; background:#0f0f0f; border:1px solid #222; border-radius:18px; padding:16px; box-shadow:0 25px 80px rgba(0,0,0,.6);}
+    .modal{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.68);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .box{
+      width:100%;
+      max-width:620px;
+      background:#0f0f0f;
+      border:1px solid #222;
+      border-radius:18px;
+      padding:16px;
+      box-shadow:0 25px 80px rgba(0,0,0,.6);
+      position:relative;
+    }
     .box h3{margin:0 0 8px 0; font-size:16px;}
     .box p{margin:0 0 12px 0; color:#a0a0a0; font-size:13px; line-height:1.35;}
     .box .row2{display:flex; gap:10px; flex-wrap:wrap;}
-    .box input{flex:1; min-width:260px; background:#000; border:1px solid #333; border-radius:12px; padding:12px 14px; color:#fff; outline:none; font-family:ui-monospace,Consolas,monospace;}
-    .save{height:44px; padding:0 16px; border-radius:12px; border:0; background:var(--accent); color:#000; font-weight:950; cursor:pointer;}
+    .box input{
+      flex:1; min-width:260px;
+      background:#000;
+      border:1px solid #333;
+      border-radius:12px;
+      padding:12px 14px;
+      color:#fff;
+      outline:none;
+      font-family:ui-monospace,Consolas,monospace;
+    }
+    .save{
+      height:44px;
+      padding:0 16px;
+      border-radius:12px;
+      border:0;
+      background:var(--accent);
+      color:#000;
+      font-weight:950;
+      cursor:pointer;
+    }
+    .closeX{
+      position:absolute;
+      top:10px;
+      right:10px;
+      width:36px;
+      height:36px;
+      border-radius:10px;
+      border:1px solid #2a2a2a;
+      background:#000;
+      color:#ddd;
+      cursor:pointer;
+      font-size:18px;
+      line-height:1;
+      font-weight:900;
+    }
+    .closeX:hover{
+      border-color:var(--accent);
+      color:#fff;
+    }
   </style>
 </head>
 
@@ -328,10 +381,10 @@
         <div class="group">
           <span class="label">Ratio</span>
           <div class="btns" id="ratioGroup">
-            <button class="tbtn" data-ratio="1:1">1:1</button>
+            <button class="tbtn active" data-ratio="1:1">1:1</button>
             <button class="tbtn" data-ratio="3:4">3:4</button>
             <button class="tbtn" data-ratio="4:3">4:3</button>
-            <button class="tbtn active" data-ratio="16:9">16:9</button>
+            <button class="tbtn" data-ratio="16:9">16:9</button>
             <button class="tbtn" data-ratio="9:16">9:16</button>
           </div>
         </div>
@@ -339,9 +392,9 @@
         <div class="group">
           <span class="label">Quality</span>
           <div class="btns" id="sizeGroup">
-            <button class="tbtn active" data-size="1K">1K</button>
+            <button class="tbtn" data-size="1K">1K</button>
             <button class="tbtn" data-size="2K">2K</button>
-            <button class="tbtn" data-size="4K">4K</button>
+            <button class="tbtn active" data-size="4K">4K</button>
           </div>
         </div>
 
@@ -356,8 +409,8 @@
         <div class="group">
           <span class="label">Count</span>
           <div class="slider">
-            <span class="mono" id="countVal">50</span>
-            <input type="range" id="countRange" min="1" max="200" value="50"/>
+            <span class="mono" id="countVal">4</span>
+            <input type="range" id="countRange" min="1" max="200" value="4"/>
           </div>
         </div>
 
@@ -394,7 +447,7 @@
       <div class="row" style="margin-top:10px;">
         <div class="in"><input id="basePrompt" placeholder="Base prompt (например: high-end Instagram portrait, clean minimal styling)"/></div>
         <div class="in"><input id="avoid" placeholder="Avoid (через запятую): watermark, blurry, extra fingers, bad text..."/></div>
-        <div class="in"><input id="template" placeholder="(optional) Template add-on (например: 'black nails, silver earrings, minimal makeup')"/></div>
+        <div class="in"><input id="template" placeholder="(optional) Add-on: 'black nails, silver earrings, minimal makeup'"/></div>
       </div>
 
       <div class="actions">
@@ -408,7 +461,8 @@
 
   <!-- Modal key -->
   <div class="modal" id="modal">
-    <div class="box">
+    <div class="box" role="dialog" aria-modal="true" aria-label="API key">
+      <button class="closeX" id="closeModal" aria-label="Close">×</button>
       <h3>Gemini API key</h3>
       <p>Ключ нужен только для генерации изображений. Ввод сохраняется в sessionStorage (только в этой вкладке).</p>
       <div class="row2">
@@ -420,13 +474,13 @@
 
 <script>
   // =========================
-  // State
+  // State (defaults requested)
   // =========================
   const state = {
     model: "gemini-3-pro-image-preview",
-    aspectRatio: "16:9",
-    imageSize: "1K",
-    realismLock: true,   // Ultra realism lock ON by default
+    aspectRatio: "1:1",    // default 1:1
+    imageSize: "4K",       // default 4K
+    realismLock: true,     // default ON
     reference: null,
     abort: null,
     prompts: []
@@ -476,6 +530,10 @@
   setCols($("colsRange").value);
   setTile($("tileRange").value);
 
+  // Ensure count label matches default slider value on load
+  $("countVal").textContent = $("countRange").value;
+  $("concVal").textContent = $("concRange").value;
+
   // =========================
   // Progress
   // =========================
@@ -487,20 +545,45 @@
   setProgress(0, 1);
 
   // =========================
-  // API key modal (only for images)
+  // API key modal (closeable)
   // =========================
   function getKey(){ return sessionStorage.getItem("GEMINI_API_KEY") || ""; }
-  function requireKeyForImages(){
-    if (!getKey()) $("modal").style.display = "flex";
-    return !!getKey();
+
+  function openModal(){
+    $("modal").style.display = "flex";
+    setTimeout(() => $("apiKeyInput").focus(), 0);
   }
-  $("keyBtn").onclick = () => { $("modal").style.display = "flex"; };
+  function closeModal(){
+    $("modal").style.display = "none";
+  }
+
+  function requireKeyForImages(){
+    if (!getKey()) {
+      openModal();
+      return false;
+    }
+    return true;
+  }
+
+  $("keyBtn").onclick = openModal;
+  $("closeModal").onclick = closeModal;
+
+  // close on backdrop click
+  $("modal").addEventListener("click", (e) => {
+    if (e.target === $("modal")) closeModal();
+  });
+
+  // close on Escape
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeModal();
+  });
+
   $("saveKey").onclick = () => {
     const k = $("apiKeyInput").value.trim();
-    if (!k) return;
+    if (!k) { closeModal(); return; }
     sessionStorage.setItem("GEMINI_API_KEY", k);
     $("apiKeyInput").value = "";
-    $("modal").style.display = "none";
+    closeModal();
   };
 
   // =========================
@@ -699,17 +782,16 @@
     ].join("|").toLowerCase();
   }
 
-  function buildPromptFromVars(v, base, avoid, templateAddon){
+  function buildPromptFromVars(v, base, avoid, addon){
     const baseLine = (base || "").trim() ? base.trim() + ". " : "";
-    const addon = (templateAddon || "").trim();
+    const extra = (addon || "").trim();
 
     const presetBlock = v.preset.text;
 
-    // Без конфликтов с пресетом (не добавляем "Location:" и т.п. — пресет уже определяет сцену)
     const sceneAdd =
       `Subject: ${v.subject}. Wardrobe styling: ${v.palette} ${v.wardrobe}. ` +
       `Accessories/prop: ${v.extraProp}. Details: ${v.details}. ${v.micro}.` +
-      (addon ? ` Additional notes: ${addon}.` : "");
+      (extra ? ` Additional notes: ${extra}.` : "");
 
     const refLine = state.reference
       ? "Use the attached reference image; keep the same identity and key facial features. Keep hair flow/parting consistent with the reference. Do not beautify or smooth skin."
@@ -734,14 +816,12 @@
     }
   }
 
-  function generateUniquePrompts(count, base, avoid, templateAddon){
+  function generateUniquePrompts(count, base, avoid, addon){
     const used = new Set();
     const prompts = [];
 
-    // Перемешиваем пресеты: это уже сильно разносит сюжеты
     const presetsShuffled = [...POSE_PRESETS].sort(() => Math.random() - 0.5);
 
-    // Запрещаем повторять один и тот же preset и категорию "слишком рядом"
     const recentPreset = [];
     const recentCat = [];
     const recentWindowPreset = 10;
@@ -752,7 +832,6 @@
       let v, sig;
 
       while (true){
-        // Выбор пресета: сначала циклом по перемешанному, затем случайно с ограничениями
         let preset = presetsShuffled[i % presetsShuffled.length];
 
         if (count > presetsShuffled.length) {
@@ -776,7 +855,7 @@
         tries++;
 
         if (!used.has(sig)) break;
-        if (tries > 90) break; // на очень больших count может закончиться комбинационное пространство
+        if (tries > 90) break;
       }
 
       used.add(sig);
@@ -787,7 +866,7 @@
       recentCat.push(v.preset.cat);
       while (recentCat.length > recentWindowCat) recentCat.shift();
 
-      prompts.push(buildPromptFromVars(v, base, avoid, templateAddon));
+      prompts.push(buildPromptFromVars(v, base, avoid, addon));
     }
 
     return prompts;
@@ -796,13 +875,13 @@
   // =========================
   // Render cards
   // =========================
-  function makeCard(i, prompt, presetLabel){
+  function makeCard(i, prompt){
     const el = document.createElement("div");
     el.className = "card";
     el.innerHTML = `
       <div class="thumb" id="thumb_${i}">Prompt ready</div>
       <div class="meta">
-        <div class="tag">#${i+1} · ${state.model} · ${state.aspectRatio} · ${state.imageSize} · realism:${state.realismLock ? "ON" : "off"} · ${presetLabel}</div>
+        <div class="tag">#${i+1} · ${state.model} · ${state.aspectRatio} · ${state.imageSize} · realism:${state.realismLock ? "ON" : "off"}</div>
         <pre id="p_${i}"></pre>
       </div>
       <div class="mini">
@@ -896,10 +975,7 @@
   function renderPromptBatch(prompts){
     const grid = $("grid");
     grid.innerHTML = "";
-
-    // Достаём label пресета из текста промта не будем; вместо этого отрисуем “mixed”
-    // (Если захочешь — можно вернуть из генератора не строки, а объекты {prompt, presetLabel}.)
-    prompts.forEach((p,i)=> grid.appendChild(makeCard(i, p, "mixed presets")));
+    prompts.forEach((p,i)=> grid.appendChild(makeCard(i, p)));
   }
 
   async function runPromptsOnly(){
@@ -958,6 +1034,12 @@
             } catch(e){
               attempt++;
               const status = e.status || 0;
+
+              // If quota is 0, retries are pointless
+              const msg = String(e.message || e);
+              const zeroQuota = msg.includes("Quota exceeded") && msg.includes("limit: 0");
+              if (zeroQuota) throw new Error("Quota is 0 for this model/project. Enable billing/upgrade tier, or switch model.");
+
               if ((status === 429 || status === 503) && attempt <= 6) {
                 const backoff = Math.min(9000, 600 * Math.pow(2, attempt));
                 thumb.textContent = `Rate limit… retry in ${Math.round(backoff/1000)}s`;
